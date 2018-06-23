@@ -11,7 +11,8 @@ int main()
 {
 	cout << "Hello CMake." << endl;
 
-	nyctlib::GtfsFeedParser gtfsFeedParser = nyctlib::GtfsFeedParser();
+	nyctlib::GtfsFeedParser gtfsFeedParser;
+	gtfsFeedParser.loadFile("H:/Users/Extreme/Development/Projects/NYCT/DataArchives/gtfs_nyct_06192018_0831PM.bin");
 
 	system("pause");
 	return 0;
