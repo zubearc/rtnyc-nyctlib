@@ -7,8 +7,8 @@ namespace nyctlib {
 	public:
 		GtfsFeedParser();
 		
-		virtual bool loadFile(std::string &filename) noexcept;
-		virtual bool loadBuffer(const char *buffer, int length) noexcept;
+		//virtual bool loadFile(std::string &filename) noexcept;
+		//virtual bool loadBuffer(const char *buffer, int length) noexcept;
 
 		virtual ~GtfsFeedParser() = default;
 	};
