@@ -94,7 +94,7 @@ namespace nyctlib {
 			progressstring = "at";
 			out.stop_progress = GtfsVehicleProgress::AtStation;
 		} else {
-			throw std::exception("unknown stop progress id");
+			throw std::runtime_error("unknown stop progress id");
 		}
 
 		printf(" - is %s stop #%d, %s (last updated %lld)\n", progressstring.c_str(), out.current_stop_index, out.stop_id.c_str(), out.timestamp);

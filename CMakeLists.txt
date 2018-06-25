@@ -1,7 +1,7 @@
 ﻿# CMakeList.txt : CMake project for NYCTLib, include source and define
 # project specific logic here.
 #
-cmake_minimum_required (VERSION 3.8)
+cmake_minimum_required (VERSION 3.5)
 
 include_directories (includes/)
 
@@ -13,10 +13,12 @@ set(NYCTLIB_SOURCES
 	sources/GtfsFeedParser.cpp
 )
 
+set(CMAKE_CXX_STANDARD 14)
+
 if (EMSCRIPTEN)
 	# todo: special code for emscripten build
 else()
-# Add source to this project's executable.
+	# Add source to this project's executable.
 	add_executable (NYCTLib ${NYCTLIB_SOURCES} "NYCTLib.cpp" "NYCTLib.h")
 endif()
 # TODO: Add tests and install targets if needed.
