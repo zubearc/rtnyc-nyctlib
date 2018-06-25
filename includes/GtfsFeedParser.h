@@ -18,20 +18,21 @@ namespace nyctlib {
 	};
 
 	struct GtfsVehicleUpdate {
-		long long timestamp;
-		int current_stop_index;
+		long long timestamp = NULL;
+		int current_stop_index = -1;
 		GtfsTrip trip;
 		GtfsVehicleProgress stop_progress;
 		std::string stop_id;
 	};
 
 	struct GtfsTripTimeUpdate {
-		long long arrival_time;
-		long long depature_time;
+		long long arrival_time = NULL;
+		long long depature_time = NULL;
 		std::string stop_id;
 	};
 
 	struct GtfsTripUpdate {
+		long long timestamp = NULL;
 		GtfsTrip trip;
 		std::vector<GtfsTripTimeUpdate> stop_time_updates;
 	};
@@ -44,11 +45,11 @@ namespace nyctlib {
 		std::vector<GtfsVehicleUpdate> vehicle_updates;
 	private:
 
-		virtual bool loadTrip(const transit_realtime::TripDescriptor &trip);
+		virtual bool loadTrip(const transit_realtime::TripDescriptor &trip, GtfsTrip &out);
 		virtual bool loadStopTimeUpdate(const transit_realtime::TripUpdate_StopTimeUpdate &stoptimeupdate);
 
-		virtual bool parseTripUpdate(const transit_realtime::TripUpdate &tripupdate);
-		virtual bool parseVehicleUpdate(const transit_realtime::VehiclePosition &vehicleposition);
+		virtual bool parseTripUpdate(const transit_realtime::TripUpdate &tripupdate, GtfsTripUpdate &out);
+		virtual bool parseVehicleUpdate(const transit_realtime::VehiclePosition &vehicleposition, GtfsVehicleUpdate &out);
 
 		virtual bool readHeader(const transit_realtime::FeedHeader &header) noexcept;
 

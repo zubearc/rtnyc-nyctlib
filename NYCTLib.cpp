@@ -5,6 +5,8 @@
 
 #include "GtfsFeedParser.h"
 
+#include <stdlib.h>
+
 using namespace std;
 
 int main()
@@ -12,7 +14,11 @@ int main()
 	cout << "Hello CMake." << endl;
 
 	nyctlib::GtfsFeedParser gtfsFeedParser;
+#ifdef _WIN32
 	gtfsFeedParser.loadFile("H:/Users/Extreme/Development/Projects/NYCT/DataArchives/gtfs_nyct_06192018_0831PM.bin");
+#else
+
+#endif
 
 	system("pause");
 	return 0;
