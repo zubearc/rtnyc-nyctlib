@@ -11,6 +11,7 @@ set(NYCTLIB_SOURCES
 	sources/nyct-subway.pb.cc
 	#
 	sources/GtfsFeedParser.cpp
+	sources/NYCTFeedParser.cpp
 )
 
 if (EMSCRIPTEN)

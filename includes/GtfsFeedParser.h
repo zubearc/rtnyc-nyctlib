@@ -1,7 +1,10 @@
 #pragma once
 
+#include <functional>
 #include <string>
 #include "gtfs-realtime.pb.h"
+
+#define PRINTDBG printf
 
 namespace nyctlib {
 
@@ -20,7 +23,7 @@ namespace nyctlib {
 	struct GtfsVehicleUpdate {
 		long long timestamp = NULL;
 		int current_stop_index = -1;
-		GtfsTrip trip;
+		std::shared_ptr<GtfsTrip> trip;
 		GtfsVehicleProgress stop_progress;
 		std::string stop_id;
 	};
@@ -33,23 +36,42 @@ namespace nyctlib {
 
 	struct GtfsTripUpdate {
 		long long timestamp = NULL;
-		GtfsTrip trip;
-		std::vector<GtfsTripTimeUpdate> stop_time_updates;
+		std::shared_ptr<GtfsTrip> trip;
+		std::vector<std::shared_ptr<GtfsTripTimeUpdate>> stop_time_updates;
 	};
 
 	class GtfsFeedParser {
 
 		std::string _gtfs_version;
 
-		std::vector<GtfsTripUpdate> trip_updates;
-		std::vector<GtfsVehicleUpdate> vehicle_updates;
+		std::vector<std::shared_ptr<GtfsTripUpdate>> trip_updates;
+		std::vector<std::shared_ptr<GtfsVehicleUpdate>> vehicle_updates;
 	private:
+		inline void addTripUpdate(GtfsTripUpdate *tripupdate) {
+			trip_updates.push_back(std::shared_ptr<GtfsTripUpdate>(tripupdate));
+		}
 
+		inline void addVehicleUpdate(GtfsVehicleUpdate *vehicleupdate) {
+			vehicle_updates.push_back(std::shared_ptr<GtfsVehicleUpdate>(vehicleupdate));
+		}
+
+		inline void addTripUpdate(std::shared_ptr<GtfsTripUpdate> &&tripupdate) {
+			trip_updates.push_back(std::move(tripupdate));
+		}
+
+		inline void addVehicleUpdate(std::shared_ptr<GtfsVehicleUpdate> &&vehicleupdate) {
+			vehicle_updates.push_back(std::move(vehicleupdate));
+		}
+	protected:
 		virtual bool loadTrip(const transit_realtime::TripDescriptor &trip, GtfsTrip &out);
-		virtual bool loadStopTimeUpdate(const transit_realtime::TripUpdate_StopTimeUpdate &stoptimeupdate);
+		virtual bool parseStopTimeUpdate(const transit_realtime::TripUpdate_StopTimeUpdate &stoptimeupdate, GtfsTripTimeUpdate &timeupdate);
 
 		virtual bool parseTripUpdate(const transit_realtime::TripUpdate &tripupdate, GtfsTripUpdate &out);
 		virtual bool parseVehicleUpdate(const transit_realtime::VehiclePosition &vehicleposition, GtfsVehicleUpdate &out);
+
+		virtual bool loadTripUpdate(const transit_realtime::TripUpdate &tripupdate, GtfsTripUpdate &out);
+		virtual bool loadVehicleUpdate(const transit_realtime::VehiclePosition &vehicleposition, GtfsVehicleUpdate &out);
+
 
 		virtual bool readHeader(const transit_realtime::FeedHeader &header) noexcept;
 
@@ -67,7 +89,29 @@ namespace nyctlib {
 
 		virtual bool readFeedMessage(const transit_realtime::FeedMessage &message);
 
+		virtual void getTripUpdates(std::vector<std::shared_ptr<GtfsTripUpdate>> &v) {
+			v = trip_updates;
+		}
+
+		virtual void getVehicleUpdates(std::vector<std::shared_ptr<GtfsVehicleUpdate>> &v) {
+			v = vehicle_updates;
+		}
+
+		virtual void forEachTripUpdate(std::function<void(GtfsTripUpdate*)> l) {
+			for (auto i : trip_updates) {
+				l(i.get());
+			}
+		}
+
+		virtual void forEachVehicleUpdate(std::function<void(GtfsVehicleUpdate*)> l) {
+			for (auto i : vehicle_updates) {
+				l(i.get());
+			}
+		}
+
 		void getFeedVersion();
+
+		virtual void dumpOut();
 
 		virtual ~GtfsFeedParser() = default;
 	};
