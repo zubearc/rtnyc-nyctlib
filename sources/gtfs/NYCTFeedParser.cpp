@@ -1,4 +1,4 @@
-#include "NyctFeedParser.h"
+#include "gtfs/NYCTFeedParser.h"
 
 namespace nyctlib {
 

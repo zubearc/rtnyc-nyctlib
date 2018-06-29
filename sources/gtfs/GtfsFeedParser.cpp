@@ -1,4 +1,4 @@
-#include "GtfsFeedParser.h"
+#include "gtfs/GtfsFeedParser.h"
 
 #include <istream>
 #include <fstream>
@@ -19,7 +19,7 @@ namespace nyctlib {
 		auto startTime = trip.start_time();
 		// schedule relationship not read
 
-		printf("tripId=%s, routeId=%s, startDate=%s\n",
+		PRINTDBG("tripId=%s, routeId=%s, startDate=%s\n",
 			out.trip_id.c_str(), out.route_id.c_str(), out.start_date.c_str());
 
 		return true;
@@ -50,7 +50,7 @@ namespace nyctlib {
 
 		std::string stop_id = stoptimeupdate.stop_id();
 
-		printf("   -- arriving to '%s' at %lld, departing at %lld (%lld sec wait)\n",
+		PRINTDBG("   -- arriving to '%s' at %lld, departing at %lld (%lld sec wait)\n",
 			stop_id.c_str(), arrival_time, depature_time, depature_time - arrival_time);
 		
 		timeupdate.arrival_time = arrival_time;

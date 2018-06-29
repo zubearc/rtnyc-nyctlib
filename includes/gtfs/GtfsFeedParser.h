@@ -5,6 +5,7 @@
 #include "gtfs-realtime.pb.h"
 
 #define PRINTDBG printf
+#define PRINTDBG
 
 namespace nyctlib {
 
@@ -97,13 +98,13 @@ namespace nyctlib {
 			v = vehicle_updates;
 		}
 
-		virtual void forEachTripUpdate(std::function<void(GtfsTripUpdate*)> l) {
+		virtual void forEachTripUpdate(const std::function<void(GtfsTripUpdate*)> &&l) {
 			for (auto i : trip_updates) {
 				l(i.get());
 			}
 		}
 
-		virtual void forEachVehicleUpdate(std::function<void(GtfsVehicleUpdate*)> l) {
+		virtual void forEachVehicleUpdate(const std::function<void(GtfsVehicleUpdate*)> &&l) {
 			for (auto i : vehicle_updates) {
 				l(i.get());
 			}

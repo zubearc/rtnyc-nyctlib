@@ -3,8 +3,10 @@
 
 #include "NYCTLib.h"
 
-#include "GtfsFeedParser.h"
-#include "NYCTFeedParser.h"
+#include "gtfs/GtfsFeedParser.h"
+#include "gtfs/NYCTFeedParser.h"
+#include "NYCTFeedTracker.h"
+#include "NYCTFeedService.h"
 
 #include <stdlib.h>
 
@@ -14,13 +16,18 @@ int main()
 {
 	cout << "Hello CMake." << endl;
 
+	/*
 	nyctlib::NYCTFeedParser gtfsFeedParser;
 #ifdef _WIN32
 	gtfsFeedParser.loadFile("H:/Users/Extreme/Development/Projects/NYCT/DataArchives/gtfs_nyct_06192018_0831PM.bin");
 #else
 
 #endif
-	gtfsFeedParser.dumpOut();
+	gtfsFeedParser.dumpOut();*/
+
+	nyctlib::NYCTFeedTracker nyctFeedTracker;
+	//auto trips = nyctFeedTracker.getTripsScheduledToArriveAtStop("217S");
+	nyctFeedTracker.printTripsScheduledToArriveAtStop("217S");
 
 	system("pause");
 	return 0;
