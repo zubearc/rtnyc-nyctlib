@@ -10,7 +10,10 @@ set(NYCTLIB_SOURCES
 	sources/gtfs-realtime.pb.cc
 	sources/nyct-subway.pb.cc
 	#
-	sources/GtfsFeedParser.cpp
+	sources/gtfs/GtfsFeedParser.cpp
+	sources/gtfs/NYCTFeedParser.cpp
+	sources/NYCTFeedService.cpp
+	sources/NYCTFeedTracker.cpp
 )
 
 set(CMAKE_CXX_STANDARD 14)
@@ -24,5 +27,5 @@ endif()
 # TODO: Add tests and install targets if needed.
 
 find_package(protobuf CONFIG REQUIRED)
-target_link_libraries(NYCTLib protobuf::libprotobuf)
+target_link_libraries(NYCTLib PRIVATE protobuf::libprotobuf)
 include_directories(${protobuf_INCLUDE_DIR})

@@ -1,4 +1,4 @@
-#include "GtfsFeedParser.h"
+#include "gtfs/GtfsFeedParser.h"
 
 #include <istream>
 #include <fstream>
@@ -19,58 +19,50 @@ namespace nyctlib {
 		auto startTime = trip.start_time();
 		// schedule relationship not read
 
-		printf("tripId=%s, routeId=%s, startDate=%s\n",
+		PRINTDBG("tripId=%s, routeId=%s, startDate=%s\n",
 			out.trip_id.c_str(), out.route_id.c_str(), out.start_date.c_str());
 
 		return true;
 	}
 
-	bool GtfsFeedParser::loadStopTimeUpdate(const transit_realtime::TripUpdate_StopTimeUpdate &stoptimeupdate) {
+	bool GtfsFeedParser::parseStopTimeUpdate(const transit_realtime::TripUpdate_StopTimeUpdate &stoptimeupdate, GtfsTripTimeUpdate &timeupdate) {
+		long long arrival_time = 0;
+		int arrival_delay = 0;
+		int arrival_uncertanty = 0;
 
-		return false;
+		long long depature_time = 0;
+		int depature_delay = 0;
+		int depature_uncertanty = 0;
+
+		if (stoptimeupdate.has_arrival()) {
+			auto arrival = stoptimeupdate.arrival();
+			arrival_delay = arrival.delay();
+			arrival_time = arrival.time();
+			arrival_uncertanty = arrival.uncertainty();
+		}
+
+		if (stoptimeupdate.has_departure()) {
+			auto depature = stoptimeupdate.departure();
+			depature_time = depature.time();
+			depature_delay = depature.delay();
+			depature_uncertanty = depature.uncertainty();
+		}
+
+		std::string stop_id = stoptimeupdate.stop_id();
+
+		PRINTDBG("   -- arriving to '%s' at %lld, departing at %lld (%lld sec wait)\n",
+			stop_id.c_str(), arrival_time, depature_time, depature_time - arrival_time);
+		
+		timeupdate.arrival_time = arrival_time;
+		timeupdate.depature_time = depature_time;
+		timeupdate.stop_id = stop_id;
+		return true;
 	}
 
 	// INTERNAL PARSING + LOADING
 	bool GtfsFeedParser::parseTripUpdate(const transit_realtime::TripUpdate &tripupdate, GtfsTripUpdate &out) {
 		out.timestamp = tripupdate.timestamp();
-		auto trip = tripupdate.trip();
-		auto stoptimeupdates = tripupdate.stop_time_update();
-
-		GtfsTrip out_trip;
-		this->loadTrip(trip, out_trip);
-
-		for (auto stoptimeupdate : stoptimeupdates) {
-			long long arrival_time = 0;
-			int arrival_delay = 0;
-			int arrival_uncertanty = 0;
-
-			long long depature_time = 0;
-			int depature_delay = 0;
-			int depature_uncertanty = 0;
-
-			if (stoptimeupdate.has_arrival()) {
-				auto arrival = stoptimeupdate.arrival();
-				arrival_delay = arrival.delay();
-				arrival_time = arrival.time();
-				arrival_uncertanty = arrival.uncertainty();
-			}
-
-			if (stoptimeupdate.has_departure()) {
-				auto depature = stoptimeupdate.departure();
-				depature_time = depature.time();
-				depature_delay = depature.delay();
-				depature_uncertanty = depature.uncertainty();
-			}
-
-			std::string stop_id = stoptimeupdate.stop_id();
-
-			printf("   -- arriving to '%s' at %lld, departing at %lld (%lld sec wait)\n",
-				stop_id.c_str(), arrival_time, depature_time, depature_time - arrival_time);
-			
-			out.stop_time_updates.push_back(GtfsTripTimeUpdate{ arrival_time, depature_time, stop_id });
-		}
-
-		return false;
+		return true;
 	}
 
 	bool GtfsFeedParser::parseVehicleUpdate(const transit_realtime::VehiclePosition &vehicleposition, GtfsVehicleUpdate &out) {
@@ -78,9 +70,6 @@ namespace nyctlib {
 		auto currentStopProgress = vehicleposition.current_status();
 		out.timestamp = vehicleposition.timestamp();
 		out.stop_id = vehicleposition.stop_id();
-
-		GtfsTrip out_trip;
-		this->loadTrip(vehicleposition.trip(), out_trip);
 
 		std::string progressstring;
 
@@ -97,7 +86,36 @@ namespace nyctlib {
 			throw std::runtime_error("unknown stop progress id");
 		}
 
-		printf(" - is %s stop #%d, %s (last updated %lld)\n", progressstring.c_str(), out.current_stop_index, out.stop_id.c_str(), out.timestamp);
+		PRINTDBG(" - is %s stop #%d, %s (last updated %lld)\n", progressstring.c_str(), out.current_stop_index, out.stop_id.c_str(), out.timestamp);
+	}
+
+
+	bool GtfsFeedParser::loadTripUpdate(const transit_realtime::TripUpdate &tripupdate, GtfsTripUpdate &out) {
+		
+		parseTripUpdate(tripupdate, out);
+
+		auto out_trip = std::make_shared<GtfsTrip>();
+		loadTrip(tripupdate.trip(), *out_trip.get());
+		out.trip = std::move(out_trip);
+
+		auto stoptimeupdates = tripupdate.stop_time_update();
+
+		for (auto stoptimeupdate : stoptimeupdates) {
+			auto u = std::make_shared<GtfsTripTimeUpdate>();
+			parseStopTimeUpdate(stoptimeupdate, *u.get());
+			out.stop_time_updates.push_back(std::move(u));
+		}
+
+		return true;
+	}
+
+	bool GtfsFeedParser::loadVehicleUpdate(const transit_realtime::VehiclePosition &vehicleposition, GtfsVehicleUpdate &out) {
+
+		this->parseVehicleUpdate(vehicleposition, out);
+
+		auto out_trip = std::make_shared<GtfsTrip>();
+		this->loadTrip(vehicleposition.trip(), *out_trip.get());
+		out.trip = std::move(out_trip);
 
 		return true;
 ;	}
@@ -115,23 +133,26 @@ namespace nyctlib {
 		std::string entity_id = entity.id();
 
 		if (entity.has_trip_update()) {
-			GtfsTripUpdate trip_update;
-			if (!this->parseTripUpdate(entity.trip_update(), trip_update)) {
+			auto &trip_update = std::make_unique<GtfsTripUpdate>();
+			if (!this->loadTripUpdate(entity.trip_update(), *trip_update.get())) {
 				fprintf(stderr, "FAILED TO PARSE TRIP UPDATE for entity '%s'\n", entity_id.c_str());
 				return false;
 			}
+			this->addTripUpdate(std::move(trip_update));
 		}
 
 		if (entity.has_vehicle()) {
-			GtfsVehicleUpdate vech_update;
-			if (!this->parseVehicleUpdate(entity.vehicle(), vech_update)) {
+			auto vech_update = std::make_unique<GtfsVehicleUpdate>();
+			if (!this->loadVehicleUpdate(entity.vehicle(), *vech_update.get())) {
 				fprintf(stderr, "FAILED TO PARSE VEHICLE UPDATE for entity '%s'\n", entity_id.c_str());
 				return false;
 			}
+			this->addVehicleUpdate(std::move(vech_update));
 		}
 
 		return true;
 	}
+
 	bool GtfsFeedParser::loadFile(std::string filename) noexcept {
 		std::fstream input(filename, std::ios::in | std::ios::binary);
 		transit_realtime::FeedMessage feedMessage;
@@ -165,8 +186,27 @@ namespace nyctlib {
 		for (auto feedentity : message.entity()) {
 			this->readBody(feedentity);
 		}
-		
 
 		return false;
+	}
+
+	void GtfsFeedParser::dumpOut() {
+
+		forEachVehicleUpdate([](GtfsVehicleUpdate *v) {
+			PRINTDBG("Found vehicle at stop #%d (stop id %s) at %lld\n", v->current_stop_index, v->stop_id.c_str(), v->timestamp);
+			auto &trip = v->trip;
+			PRINTDBG("\t route '%s', trip id '%s', at %s is ", trip->route_id.c_str(), trip->trip_id.c_str(), trip->start_date.c_str());
+			if (v->stop_progress == GtfsVehicleProgress::ApproachingStation)
+				PRINTDBG("approaching\n");
+			if (v->stop_progress == GtfsVehicleProgress::EnrouteToStation)
+				PRINTDBG("enroute to station\n");
+			if (v->stop_progress == GtfsVehicleProgress::AtStation)
+				PRINTDBG("at station\n");
+		});
+
+		forEachTripUpdate([](GtfsTripUpdate *t) {
+			auto &trip = t->trip;
+			PRINTDBG("Trip route '%s', trip id '%s', at %s\n", trip->route_id.c_str(), trip->trip_id.c_str(), trip->start_date.c_str());
+		});
 	}
 }
