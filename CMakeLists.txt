@@ -17,9 +17,17 @@ set(NYCTLIB_SOURCES
 )
 
 set(CMAKE_CXX_STANDARD 14)
+message("Using CMAKE C++ standard ${CMAKE_CXX_STANDARD}")
+
+if (UNIX)
+	set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14")
+	set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -std=c++14")
+endif()
 
 if (EMSCRIPTEN)
-	# todo: special code for emscripten build
+    message("Building with EMSCRIPTEN")
+    add_library(NYCTLib ${NYCTLIB_SOURCES})
+    set_target_properties(NYCTLib PROPERTIES LINK_FLAGS "-s WASM=1 -o nyctlib.html")
 else()
 	# Add source to this project's executable.
 	add_executable (NYCTLib ${NYCTLIB_SOURCES} "NYCTLib.cpp" "NYCTLib.h")

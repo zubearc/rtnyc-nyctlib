@@ -185,6 +185,9 @@ _pkginfo.txt
 
 # Others
 ClientBin/
+
+build/
+buildw/
 ~$*
 *~
 *.dbmdl
@@ -261,3 +264,4 @@ __pycache__/
 *.pyc
 
 build/
+buildw/

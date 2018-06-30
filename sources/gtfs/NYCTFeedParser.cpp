@@ -75,7 +75,7 @@ namespace nyctlib {
 		std::string entity_id = entity.id();
 
 		if (entity.has_trip_update()) {
-			auto &trip_update = std::make_unique<NYCTTripUpdate>();
+			auto trip_update = std::make_unique<NYCTTripUpdate>();
 			if (!this->loadTripUpdate(entity.trip_update(), *trip_update.get())) {
 				fprintf(stderr, "FAILED TO PARSE TRIP UPDATE for entity '%s'\n", entity_id.c_str());
 				return false;
