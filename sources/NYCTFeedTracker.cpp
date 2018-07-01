@@ -3,10 +3,27 @@
 #include <time.h>
 
 namespace nyctlib {
+	void NYCTFeedTracker::update() {
+		feed.update();
+		
+		feed.getCurrentFeed()->forEachTripUpdate([this](NYCTTripUpdate *tu) {
+			NYCTTrip *trip = (NYCTTrip*)tu->trip.get();
+			std::string trainid = trip->nyct_train_id;
+			
+			if (this->tracked_ticker) {
+				if (this->tracked_trips.count(trainid) == 0) {
+					printf("NYCTTrainTracker: New untracked train with ID '%s'", trainid.c_str());
+				} else {
+					//TODO
+				}
+			}
+		});
+	}
+
 	std::vector<NYCTTripUpdate> NYCTFeedTracker::getTripsScheduledToArriveAtStop(std::string stop_id) {
 		std::vector<NYCTTripUpdate> trips;
 
-		currentFeed.getCurrentFeed()->forEachTripUpdate([&](NYCTTripUpdate *tu) {
+		feed.getCurrentFeed()->forEachTripUpdate([&](NYCTTripUpdate *tu) {
 			for (auto timeUpdate : tu->stop_time_updates) {
 				if (timeUpdate->stop_id == stop_id) {
 					trips.push_back(NYCTTripUpdate(*tu));

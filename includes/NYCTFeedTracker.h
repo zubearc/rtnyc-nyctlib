@@ -1,12 +1,23 @@
 #pragma once
 
 #include "NYCTFeedService.h"
+#include "Globals.h"
 
 namespace nyctlib {
 	class NYCTFeedTracker {
-		NYCTFeedService currentFeed;
+		NYCTFeedService feed;
+
+		int tracked_ticker = 0;
+
+		long long last_update_time;
+
+		std::map<std::string /* ATS ID */, NYCTTripUpdate> tracked_trips;
 	public:
-		NYCTFeedTracker() : currentFeed(NYCTFeedService()) {}
+#ifndef _EMSCRIPTEN
+		NYCTFeedTracker() : feed(NYCTFeedService()) {}
+#endif
+
+		NYCTFeedTracker(NYCTFeedService feed) : feed(feed) {};
 
 		void update();
 
