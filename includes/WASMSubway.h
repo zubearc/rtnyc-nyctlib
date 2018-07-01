@@ -14,12 +14,12 @@ extern "C" {
 		long long	timestamp;
 		int			current_stop_index;
 
-		std::string trip_id;
-		std::string trip_start_date;
-		std::string trip_route_id;
-		std::string trip_nyct_train_id;
+		const char* trip_id;
+		const char* trip_start_date;
+		const char* trip_route_id;
+		const char* trip_nyct_train_id;
 		bool		trip_nyct_is_assigned;
-		std::string trip_nyct_direction;
+		const char* trip_nyct_direction;
 
 		// ...
 	};
@@ -34,11 +34,11 @@ extern "C" {
 
 	EXPORTABLE void nyctlib_init();
 
-	EXPORTABLE PNYCTFeedTracker nyctlib_NYCTFeedService_create();
+	EXPORTABLE PNYCTFeedTracker nyctlib_NYCTFeedTracker_create();
 
-	EXPORTABLE bool nyctlib_NYCTFeedService_loadbuffer(PNYCTFeedTracker tracker, const char *buffer);
+	EXPORTABLE bool nyctlib_NYCTFeedTracker_loadbuffer(PNYCTFeedTracker tracker, const char *buffer);
 
-	EXPORTABLE void nyctlib_NYCTFeedService_destroy(PNYCTFeedTracker tracker);
+	EXPORTABLE void nyctlib_NYCTFeedTracker_destroy(PNYCTFeedTracker tracker);
 
 #ifdef __cplusplus
 }

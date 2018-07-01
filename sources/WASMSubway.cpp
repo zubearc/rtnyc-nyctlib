@@ -10,15 +10,18 @@ EXPORTABLE void nyctlib_init() {
 	printf("Hello from WASMSubway.cpp!\n");
 }
 
-EXPORTABLE PNYCTFeedTracker nyctlib_NYCTFeedService_create() {
-	auto tracker = new NYCTFeedTracker();
+EXPORTABLE PNYCTFeedTracker nyctlib_NYCTFeedTracker_create() {
+	NYCTFeedService feedService;
+	auto tracker = new NYCTFeedTracker(feedService);
 	return tracker;
 }
 
-EXPORTABLE bool nyctlib_NYCTFeedService_loadbuffer(PNYCTFeedTracker tracker, const char *buffer) {
-	auto trip_update = (NYCTTripUpdate*)tracker._NYCTTripUpdate;
+EXPORTABLE bool nyctlib_NYCTFeedTracker_loadbuffer(PNYCTFeedTracker tracker, const char *buffer) {
+	auto trip_update = (NYCTFeedTracker*)tracker;
+	//printf("Got: %s\n", buffer);
+	return true;
 }
 
-EXPORTABLE void nyctlib_NYCTFeedService_destroy(PNYCTFeedTracker tracker) {
-	delete tracker->_NYCTTripUpdate;
+EXPORTABLE void nyctlib_NYCTFeedTracker_destroy(PNYCTFeedTracker tracker) {
+	delete (NYCTFeedTracker*)tracker;
 }

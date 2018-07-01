@@ -26,8 +26,9 @@ endif()
 
 if (EMSCRIPTEN)
     message("Building with EMSCRIPTEN")
-    add_library(NYCTLib ${NYCTLIB_SOURCES})
-    set_target_properties(NYCTLib PROPERTIES LINK_FLAGS "-s WASM=1 -o nyctlib.html")
+    message(FATAL_ERROR "Please use emscripen_build.py to build using Emscripten")
+#    add_library(NYCTLib ${NYCTLIB_SOURCES})
+#    set_target_properties(NYCTLib PROPERTIES LINK_FLAGS "-s WASM=1 -s EXPORT_ALL=1  -o nyctlib.html")
 else()
 	# Add source to this project's executable.
 	add_executable (NYCTLib ${NYCTLIB_SOURCES} "NYCTLib.cpp" "NYCTLib.h")
