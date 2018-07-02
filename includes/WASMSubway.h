@@ -38,6 +38,8 @@ extern "C" {
 
 	EXPORTABLE bool nyctlib_NYCTFeedTracker_loadbuffer(PNYCTFeedTracker tracker, const char *buffer);
 
+	EXPORTABLE bool nyctlib_NYCTFeedTracker_printTripsScheduledToArriveAtStop(PNYCTFeedTracker tracker, const char *station_id);
+
 	EXPORTABLE void nyctlib_NYCTFeedTracker_destroy(PNYCTFeedTracker tracker);
 
 #ifdef __cplusplus

@@ -87,6 +87,8 @@ namespace nyctlib {
 		}
 
 		PRINTDBG(" - is %s stop #%d, %s (last updated %lld)\n", progressstring.c_str(), out.current_stop_index, out.stop_id.c_str(), out.timestamp);
+
+		return true;
 	}
 
 
@@ -175,6 +177,17 @@ namespace nyctlib {
 
 		return readFeedMessage(feedMessage);
 	}
+
+	bool GtfsFeedParser::loadBuffer(const char *buffer, int length) noexcept {
+		transit_realtime::FeedMessage feedMessage;
+
+		if (!feedMessage.ParseFromArray(buffer, length)) {
+			fprintf(stderr, "Failed to read protocol buffer\n");
+			return false;
+		}
+
+		return readFeedMessage(feedMessage);
+	}
 	
 	bool GtfsFeedParser::readFeedMessage(const transit_realtime::FeedMessage &message) {
 
@@ -182,7 +195,6 @@ namespace nyctlib {
 			return false;
 
 		this->readHeader(message.header());
-
 		for (auto feedentity : message.entity()) {
 			this->readBody(feedentity);
 		}

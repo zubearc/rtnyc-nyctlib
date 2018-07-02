@@ -4,9 +4,16 @@
 
 namespace nyctlib {
 	void NYCTFeedTracker::update() {
-		feed.update();
+		feed->update();
+
+		auto currentFeed = feed->getCurrentFeed();
 		
-		feed.getCurrentFeed()->forEachTripUpdate([this](NYCTTripUpdate *tu) {
+		if (currentFeed == nullptr) {
+			printf("Cannot update because currentFeed was nullptr.\n");
+			return;
+		}
+
+		currentFeed->forEachTripUpdate([this](NYCTTripUpdate *tu) {
 			NYCTTrip *trip = (NYCTTrip*)tu->trip.get();
 			std::string trainid = trip->nyct_train_id;
 			
@@ -23,7 +30,14 @@ namespace nyctlib {
 	std::vector<NYCTTripUpdate> NYCTFeedTracker::getTripsScheduledToArriveAtStop(std::string stop_id) {
 		std::vector<NYCTTripUpdate> trips;
 
-		feed.getCurrentFeed()->forEachTripUpdate([&](NYCTTripUpdate *tu) {
+		auto currentFeed = feed->getCurrentFeed();
+
+		if (currentFeed == nullptr) {
+			printf("Cannot update because currentFeed was nullptr.\n");
+			return trips;
+		}
+
+		currentFeed->forEachTripUpdate([&](NYCTTripUpdate *tu) {
 			for (auto timeUpdate : tu->stop_time_updates) {
 				if (timeUpdate->stop_id == stop_id) {
 					trips.push_back(NYCTTripUpdate(*tu));

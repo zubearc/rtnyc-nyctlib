@@ -20,7 +20,8 @@ LIBRARIES = [
 ]
 Sources = [
 	"sources/WasmExports.cpp",
-	"sources/WASMSubway.cpp"
+	"sources/WASMSubway.cpp",
+	"sources/EmscriptenNYCTFeedService.cpp"
 ]
 EMSCRIPTEN_GENERATE_WEBASSEMBLY = True
 EMSCRIPTEN_OUTPUTFILE = "nyctlib.html"
@@ -108,7 +109,7 @@ libs_line = ""
 for l in LIBRARIES:
 	libs_line += "-l"+l+ " "
 
-out = "{EMSCRIPTEN_COMPILER} {SOURCES} {INCLUDES} {LIBRARY_DIRECTORIES} {LIBRARIES} -o nyctlib.html -s EXTRA_EXPORTED_RUNTIME_METHODS='[\"ccall\", \"cwrap\"]' --emrun {LINKER_FLAGS}".format(
+out = "{EMSCRIPTEN_COMPILER} {SOURCES} {INCLUDES} {LIBRARY_DIRECTORIES} {LIBRARIES} -o nyctlib.html -s EXTRA_EXPORTED_RUNTIME_METHODS='[\"ccall\", \"cwrap\"]' -s EMTERPRETIFY=1 -s EMTERPRETIFY_ASYNC=1 -s EMTERPRETIFY_FILE=emf --emrun {LINKER_FLAGS}".format(
 	EMSCRIPTEN_COMPILER = EMSCRIPTEN_COMPILER,
 	SOURCES = sources_line,
 	INCLUDES = includes_line,

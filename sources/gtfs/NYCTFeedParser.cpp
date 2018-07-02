@@ -62,12 +62,16 @@ namespace nyctlib {
 	}
 
 	bool NYCTFeedParser::loadVehicleUpdate(const transit_realtime::VehiclePosition &vehicleposition, NYCTVehicleUpdate &out) {
-		GtfsFeedParser::parseVehicleUpdate(vehicleposition, out);
+		bool r = GtfsFeedParser::parseVehicleUpdate(vehicleposition, out);
+
+		if (!r) {
+			//DEBUGASSERT
+			return r;
+		}
 
 		auto out_trip = std::make_unique<NYCTTrip>();
 		this->loadTrip(vehicleposition.trip(), *out_trip.get());
 		out.trip = std::move(out_trip);
-
 		return true;
 	}
 

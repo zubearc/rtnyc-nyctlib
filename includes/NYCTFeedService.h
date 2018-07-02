@@ -5,7 +5,7 @@
 #include "IFeedService.h"
 
 namespace nyctlib {
-	class NYCTFeedService : IFeedService {
+	class NYCTFeedService : public IFeedService {
 #ifdef  _EMSCRIPTEN
 		std::string buffer;
 		std::shared_ptr<NYCTFeedParser> feed_parser;
@@ -21,7 +21,7 @@ namespace nyctlib {
 #endif
 		virtual std::shared_ptr<NYCTFeedParser> getLatestFeed();
 
-		void update() {}; // TODO: stub
+		virtual void update() {}; // TODO: stub
 
 		// Gets latest cached feed
 		virtual std::shared_ptr<NYCTFeedParser> getCurrentFeed() {

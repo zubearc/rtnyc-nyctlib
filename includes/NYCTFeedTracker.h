@@ -5,7 +5,7 @@
 
 namespace nyctlib {
 	class NYCTFeedTracker {
-		NYCTFeedService feed;
+		std::unique_ptr<IFeedService> feed;
 
 		int tracked_ticker = 0;
 
@@ -14,10 +14,10 @@ namespace nyctlib {
 		std::map<std::string /* ATS ID */, NYCTTripUpdate> tracked_trips;
 	public:
 #ifndef _EMSCRIPTEN
-		NYCTFeedTracker() : feed(NYCTFeedService()) {}
+		NYCTFeedTracker() : feed(std::make_unique<NYCTFeedService>()) {}
 #endif
 
-		NYCTFeedTracker(NYCTFeedService feed) : feed(feed) {};
+		NYCTFeedTracker(std::unique_ptr<IFeedService> &&feed) : feed(std::move(feed)) {};
 
 		void update();
 

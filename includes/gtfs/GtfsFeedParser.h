@@ -4,7 +4,7 @@
 #include <string>
 #include "gtfs-realtime.pb.h"
 
-#define PRINTDBG printf
+//#define PRINTDBG printf
 #define PRINTDBG
 
 namespace nyctlib {
@@ -86,7 +86,8 @@ namespace nyctlib {
 		virtual bool loadFile(std::string filename) noexcept;
 
 		virtual bool loadBuffer(std::string &data) noexcept;
-		//virtual bool loadBuffer(const char *buffer, int length) noexcept;
+
+		virtual bool loadBuffer(const char *buffer, int length) noexcept;
 
 		virtual bool readFeedMessage(const transit_realtime::FeedMessage &message);
 
