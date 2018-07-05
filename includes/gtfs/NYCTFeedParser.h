@@ -23,7 +23,23 @@ namespace nyctlib {
 	};
 
 	struct NYCTTripUpdate : GtfsTripUpdate {
-		NYCTTrip nyct_trip;
+		inline bool operator==(const NYCTTripUpdate& r) {
+			for (int i = 0; i < this->stop_time_updates.size(); i++) {
+				auto lT = (NYCTTripTimeUpdate*)this->stop_time_updates[i].get();
+				auto rT = (NYCTTripTimeUpdate*)r.stop_time_updates[i].get();
+				if (!(lT->actual_track == rT->actual_track &&
+						lT->arrival_time == rT->arrival_time &&
+						lT->depature_time == rT->depature_time &&
+						lT->scheduled_track == rT->scheduled_track &&
+						lT->stop_id == rT->stop_id)) {
+					return false;
+				}
+			}
+			if (this->trip->trip_id != this->trip->trip_id) {
+				return false;
+			}
+			return true;
+		}
 	};
 	
 	class NYCTFeedParser : public GtfsFeedParser {

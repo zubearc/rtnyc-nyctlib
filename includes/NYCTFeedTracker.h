@@ -23,7 +23,7 @@ namespace nyctlib {
 
 		NYCTFeedTracker(std::unique_ptr<IFeedService> &&feed) : feed(std::move(feed)) {};
 
-		void update();
+		bool update();
 
 		void run();
 
