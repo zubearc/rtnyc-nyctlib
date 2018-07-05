@@ -2,6 +2,14 @@
 
 #include <time.h>
 
+#ifdef _WIN32
+#include <windows.h>
+#define SLEEP Sleep
+#else
+#include <unistd.h>
+#define SLEEP sleep
+#endif
+
 namespace nyctlib {
 	void NYCTFeedTracker::update() {
 		feed->update();
@@ -20,11 +28,20 @@ namespace nyctlib {
 			if (this->tracked_ticker) {
 				if (this->tracked_trips.count(trainid) == 0) {
 					printf("NYCTTrainTracker: New untracked train with ID '%s'", trainid.c_str());
+					this->tracked_trips[trainid] = NYCTTripUpdate(*tu);
 				} else {
 					//TODO
+					//printf("NYCTTrainT")
 				}
 			}
 		});
+	}
+
+	void NYCTFeedTracker::run() {
+		while (this->active) {
+			SLEEP(15000);
+			this->update();
+		}
 	}
 
 	std::vector<NYCTTripUpdate> NYCTFeedTracker::getTripsScheduledToArriveAtStop(std::string stop_id) {
