@@ -28,8 +28,8 @@ namespace nyctlib {
 
 		auto cleanup = [&](int reason = 0) {
 			// lovely simple c apis
-			printf("Would delete %s\n", file_path.c_str());
-	//		printf("Deleting %s: %d\n", file_path.c_str(), remove(file_path.c_str()));
+			//printf("Would delete %s\n", file_path.c_str());
+			printf("Deleting %s: %d\n", file_path.c_str(), remove(file_path.c_str()));
 		};
 
 		auto parser = std::make_shared<NYCTFeedParser>();
