@@ -1,6 +1,7 @@
 #include "NYCTFeedTracker.h"
 
 #include <time.h>
+#include <sstream>
 
 #ifdef _WIN32
 #include <windows.h>
@@ -64,7 +65,6 @@ namespace nyctlib {
 			return true;
 		};
 
-		// C++11 is fucking amazing -- NO TEMPLATES!!
 		auto compareTripUpdates = [&](std::vector<std::shared_ptr<GtfsTripTimeUpdate>> &old, std::vector<std::shared_ptr<GtfsTripTimeUpdate>> &current, std::string tripid = "") {
 
 #define LOG_TRIPSTATUS(arguments, ...) printf(("NYCTFeedTracker: \33[1;37m'%s'\33[0m: " arguments), tripid.c_str(), ##__VA_ARGS__)
@@ -164,46 +164,48 @@ namespace nyctlib {
 
 			bool should_print_first_tripupdate_diff = false;
 
+			std::stringstream trip_arrivals_string;
+			std::stringstream trip_depatures_string;
+			std::stringstream trip_cumulative_string;
+
 			if (all_delta_arrival_time == INT_MAX) {
 				//there was no difference in data (this is ok)
 				//printf("NYCTFeedTracker: No stop arrival time updates for trip?\n");
 			} else {
 				this->tracked_trips_arrival_delays[tripid] += all_delta_arrival_time;
 				if (all_delta_arrival_time > 0)
-					LOG_TRIPSTATUS(CH_YELLOW "Trip arrivals are now %d seconds delayed. " CRESET, all_delta_arrival_time);
+					trip_arrivals_string << CH_YELLOW "Trip arrivals are now " << all_delta_arrival_time << " seconds delayed. " CRESET;
 				else if (all_delta_arrival_time < 0)
-					LOG_TRIPSTATUS(CYELLOW "Trip arrivals are now %d seconds early. " CRESET, -all_delta_arrival_time);
+					trip_arrivals_string << CYELLOW "Trip arrivals are now " << -all_delta_arrival_time <<  " seconds early. " CRESET;
 				should_print_first_tripupdate_diff = true;
 				auto cumulative_arrival_delay = this->tracked_trips_arrival_delays[tripid];
 				if (cumulative_arrival_delay != all_delta_arrival_time) {
-					printf("\n");
-					LOG_TRIPSTATUS(CH_YELLOW "Cumulative arrival delay for trip is now %d seconds." CRESET, cumulative_arrival_delay);
+					trip_cumulative_string << CH_YELLOW "Cumulative arrival delay for trip is now " << cumulative_arrival_delay << "  seconds. " CRESET;
 				}
 			}
 
 			if (all_delta_depature_time == INT_MAX) {
 				//there was no difference in data (this is ok)
-				//printf("NYCTFeedTracker: No stop depature time updates for trip?\n");
 			} else {
 				this->tracked_trips_depature_delays[tripid] += all_delta_depature_time;
-				if (!should_print_first_tripupdate_diff)
-					LOG_TRIPSTATUS(""); // hacky stub to generate print header
 				if (all_delta_depature_time > 0)
-					printf(CH_YELLOW "Trip depatures are now %d seconds delayed. " CRESET, all_delta_depature_time);
+					trip_depatures_string << CH_YELLOW "Trip depatures are now " << all_delta_depature_time << " seconds delayed. " CRESET;
 				else if (all_delta_arrival_time < 0)
-					printf(CYELLOW "Trip depatures are now %d seconds early. " CRESET, -all_delta_depature_time);
+					trip_depatures_string << CYELLOW "Trip depatures are now " << -all_delta_depature_time << " seconds early. " CRESET;
 				should_print_first_tripupdate_diff = true;
 
 				auto cumulative_depature_delay = this->tracked_trips_depature_delays[tripid];
 				if (cumulative_depature_delay != all_delta_depature_time) {
-					printf("\n");
-					LOG_TRIPSTATUS(CH_YELLOW "Cumulative depature delay for trip is now %d seconds" CRESET, cumulative_depature_delay);
+					trip_cumulative_string << CH_YELLOW "Cumulative depature delay for trip is now " << cumulative_depature_delay << "  seconds. " CRESET;
 				}
 			}
 
 
 			if (should_print_first_tripupdate_diff) {
-				printf("\nwas: ");
+				LOG_TRIPSTATUS("%s %s\n", trip_arrivals_string.str().c_str(), trip_depatures_string.str().c_str());
+				if (trip_cumulative_string.tellp())
+					LOG_TRIPSTATUS("%s\n", trip_cumulative_string.str().c_str());
+				printf("was: ");
 				printTripTimeData(*((NYCTTripTimeUpdate*)old[0].get()));
 				printf("\nnow: ");
 				printTripTimeData(*((NYCTTripTimeUpdate*)current[0].get()));
