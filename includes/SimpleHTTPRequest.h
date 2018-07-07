@@ -23,11 +23,11 @@ class SimpleHTTPRequest {
 	void* curl;
 
 public:
-	SimpleHTTPRequest::SimpleHTTPRequest() {
+	SimpleHTTPRequest() {
 		curl = curl_easy_init();
 	}
 
-	bool SimpleHTTPRequest::get_save(const char *url, const char *filename) {
+	bool get_save(const char *url, const char *filename) {
 		FILE *file = fopen(filename, "wb");
 		if (file == NULL) {
 			printf("Failed to open file %s!\n", filename);
@@ -49,7 +49,7 @@ public:
 		return true;
 	}
 
-	SimpleHTTPRequest::~SimpleHTTPRequest() {
+	~SimpleHTTPRequest() {
 		curl_easy_cleanup(curl);
 	}
 };

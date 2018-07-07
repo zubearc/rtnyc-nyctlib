@@ -8,7 +8,7 @@
 #define SLEEP Sleep
 #else
 #include <unistd.h>
-#define SLEEP sleep
+#define SLEEP(x) usleep(x * 1000)
 #endif
 
 #define CH_GREEN "\33[0;91m"
