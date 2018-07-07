@@ -3,6 +3,9 @@
 #include "NYCTFeedService.h"
 #include "Globals.h"
 
+#include <thread>
+#include <atomic>
+
 namespace nyctlib {
 	class NYCTFeedTracker {
 		std::unique_ptr<IFeedService> feed;
@@ -12,6 +15,12 @@ namespace nyctlib {
 		long long last_update_time;
 
 		std::map<std::string /* ATS ID */, NYCTTripUpdate> tracked_trips;
+		std::map<std::string /* ATS ID */, int /* Cumulative Delays */> tracked_trips_arrival_delays;
+		std::map<std::string /* ATS ID */, int /* Cumulative Delays */> tracked_trips_depature_delays;
+
+		std::atomic<bool> active;
+
+		void clearTrackedDataForTrip(std::string tripid);
 	public:
 #ifndef _EMSCRIPTEN
 		NYCTFeedTracker() : feed(std::make_unique<NYCTFeedService>()) {}
@@ -19,7 +28,13 @@ namespace nyctlib {
 
 		NYCTFeedTracker(std::unique_ptr<IFeedService> &&feed) : feed(std::move(feed)) {};
 
-		void update();
+		bool update();
+
+		void run();
+
+		inline void kill() {
+			active = false;
+		}
 
 		inline IFeedService* getFeedService() {
 			return feed.get();

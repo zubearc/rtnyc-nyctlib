@@ -128,6 +128,7 @@ namespace nyctlib {
 
 		printf("GtfsFeedParser: Read header with version '%s' at '%s' (%lld)\n", realtime_version.c_str(), time_str_from_unixtime(timestamp).c_str(), timestamp);
 
+		this->header_timestamp = timestamp;
 		return true;
 	}
 
@@ -199,7 +200,11 @@ namespace nyctlib {
 			this->readBody(feedentity);
 		}
 
-		return false;
+		return true;
+	}
+
+	long long GtfsFeedParser::getFeedTime() {
+		return this->header_timestamp;
 	}
 
 	void GtfsFeedParser::dumpOut() {

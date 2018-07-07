@@ -64,6 +64,9 @@ namespace nyctlib {
 			vehicle_updates.push_back(std::move(vehicleupdate));
 		}
 	protected:
+
+		long long header_timestamp = NULL;
+
 		virtual bool loadTrip(const transit_realtime::TripDescriptor &trip, GtfsTrip &out);
 		virtual bool parseStopTimeUpdate(const transit_realtime::TripUpdate_StopTimeUpdate &stoptimeupdate, GtfsTripTimeUpdate &timeupdate);
 
@@ -112,6 +115,7 @@ namespace nyctlib {
 		}
 
 		void getFeedVersion();
+		long long getFeedTime();
 
 		virtual void dumpOut();
 

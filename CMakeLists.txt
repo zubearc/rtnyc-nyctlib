@@ -30,8 +30,12 @@ if (EMSCRIPTEN)
 #    add_library(NYCTLib ${NYCTLIB_SOURCES})
 #    set_target_properties(NYCTLib PROPERTIES LINK_FLAGS "-s WASM=1 -s EXPORT_ALL=1  -o nyctlib.html")
 else()
+	find_package(curl REQUIRED)
+	message("CURL install dir is ${CURL_INCLUDE_DIR}")
 	# Add source to this project's executable.
-	add_executable (NYCTLib ${NYCTLIB_SOURCES} "NYCTLib.cpp" "NYCTLib.h")
+	add_executable(NYCTLib ${NYCTLIB_SOURCES} "NYCTLib.cpp" "NYCTLib.h" "sources/DynamicNYCTFeedService.cpp")
+	target_link_libraries(NYCTLib PRIVATE ${CURL_LIBRARIES})
+	include_directories(${CURL_INCLUDE_DIRS})
 endif()
 # TODO: Add tests and install targets if needed.
 
