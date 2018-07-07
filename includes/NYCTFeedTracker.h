@@ -21,6 +21,10 @@ namespace nyctlib {
 
 		void update();
 
+		inline IFeedService* getFeedService() {
+			return feed.get();
+		}
+
 		std::vector<NYCTTripUpdate> getTripsScheduledToArriveAtStop(std::string station_id);
 
 		void printTripsScheduledToArriveAtStop(std::string station_id);

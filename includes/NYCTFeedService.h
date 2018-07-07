@@ -17,7 +17,7 @@ namespace nyctlib {
 		}
 
 #ifdef _EMSCRIPTEN
-		void updateFromBuffer(const char *buffer);
+		virtual void updateFromBuffer(const char *buffer, int length);
 #endif
 		virtual std::shared_ptr<NYCTFeedParser> getLatestFeed();
 
