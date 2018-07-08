@@ -14,9 +14,12 @@
 #define CH_GREEN "\33[0;91m"
 #define CH_RED "\33[0;92m"
 #define CH_YELLOW "\33[0;93m"
+#define CH_MAGENTA "\33[95m"
 #define CPURPLE "\33[0;35m"
 #define CGREEN "\33[0;32m"
 #define CYELLOW "\33[0;33m"
+#define CMAGENTA "\33[35m"
+#define CWHITE "\33[1;37m"
 #define CRESET "\33[0m"
 
 namespace nyctlib {
@@ -87,6 +90,11 @@ namespace nyctlib {
 			int all_delta_arrival_time = INT_MAX;
 			int all_delta_depature_time = INT_MAX;
 
+			int first_arrival_diff_if_schedule_change = 0;
+			int first_depature_diff_if_schedule_change = 0;
+
+			int must_print_diffs = 0;
+
 			for (auto i : current_map) {
 				auto lT = old_map[i.first];
 				if (lT == nullptr) {
@@ -114,6 +122,9 @@ namespace nyctlib {
 							all_delta_arrival_time = arrival_diff;
 						} else if (all_delta_arrival_time != arrival_diff) {
 							all_delta_arrival_time = INT_MIN;
+							must_print_diffs = 0xC0fee;
+							LOG_TRIPSTATUS(CH_MAGENTA "Trip encountered schedule change starting from arrival for stop '%s'.\n" CRESET, i.first.c_str());
+							first_arrival_diff_if_schedule_change = arrival_diff;
 						}
 					}
 
@@ -123,44 +134,45 @@ namespace nyctlib {
 							all_delta_depature_time = depature_diff;
 						} else if (all_delta_depature_time != depature_diff) {
 							all_delta_depature_time = INT_MIN;
+							must_print_diffs = 0xC0fee;
+							LOG_TRIPSTATUS(CH_MAGENTA "Trip encountered schedule change starting from depature for stop '%s'.\n" CRESET, i.first.c_str());
+							first_depature_diff_if_schedule_change = depature_diff;
 						}
 					}
 
 					if (lT->scheduled_track != rT->scheduled_track) {
 						LOG_TRIPSTATUS("TRACKUPDATE Scheduled track for trip stop '%s' has changed!\n", i.first.c_str());
-						printf("\nwas: ");
-						printTripTimeData(*lT);
-						printf("\nnow: ");
-						printTripTimeData(*rT);
-						printf("\n");
+						must_print_diffs |= 1;
 					}
 
 					if (lT->actual_track != rT->actual_track) {
 						if (lT->actual_track == "") {
 							LOG_TRIPSTATUS("TRACKUPDATE Now have expected track data for trip stop '%s'\n", i.first.c_str());
-							printf("was: ");
-							printTripTimeData(*lT);
-							printf("\nnow: ");
-							printTripTimeData(*rT);
-							printf("\n");
+							must_print_diffs |= 1;
 						} else if (rT->actual_track == "") {
-							LOG_TRIPSTATUS("LOSTDATA Somehow lost actual track data for stop '%s'\n", i.first.c_str());
-							printf("was: ");
-							printTripTimeData(*lT);
-							printf("\nnow: ");
-							printTripTimeData(*rT);
-							printf("\n");
+							LOG_TRIPSTATUS(CMAGENTA "LOSTDATA Somehow lost actual track data for stop '%s'\n" CRESET, i.first.c_str());
+							must_print_diffs |= 1;
 						} else {
 							LOG_TRIPSTATUS(CH_YELLOW "REROUTE Train is no longer expected to stop at stop '%s' at track '%s', will now stop at track '%s'\n" CRESET,
 								i.first.c_str(), lT->actual_track.c_str(), rT->actual_track.c_str());
 						}
 					}
+
+					// am i not fucking clever for this trickery ?!
+					if (must_print_diffs > 0) {
+						printf("\nwas: ");
+						printTripTimeData(*lT);
+						printf("\nnow: ");
+						printTripTimeData(*rT);
+						printf("\n");
+						must_print_diffs--;
+					}
 				}
 				old_map.erase(i.first);
 			}
 
-			assert(all_delta_arrival_time != INT_MIN);
-			assert(all_delta_depature_time != INT_MIN);
+			//assert(all_delta_arrival_time != INT_MIN);
+			//assert(all_delta_depature_time != INT_MIN);
 
 			bool should_print_first_tripupdate_diff = false;
 
@@ -171,7 +183,7 @@ namespace nyctlib {
 			if (all_delta_arrival_time == INT_MAX) {
 				//there was no difference in data (this is ok)
 				//printf("NYCTFeedTracker: No stop arrival time updates for trip?\n");
-			} else {
+			} else if (all_delta_arrival_time != INT_MIN) {
 				this->tracked_trips_arrival_delays[tripid] += all_delta_arrival_time;
 				if (all_delta_arrival_time > 0)
 					trip_arrivals_string << CH_YELLOW "Trip arrivals are now " << all_delta_arrival_time << " seconds delayed. " CRESET;
@@ -182,11 +194,15 @@ namespace nyctlib {
 				if (cumulative_arrival_delay != all_delta_arrival_time) {
 					trip_cumulative_string << CH_YELLOW "Cumulative arrival delay for trip is now " << cumulative_arrival_delay << "  seconds. " CRESET;
 				}
+			} else /* all_delta_arrival_time == INT_MIN */{
+				this->tracked_trips_arrival_delays[tripid] += first_arrival_diff_if_schedule_change;
+				auto cumdiff = this->tracked_trips_arrival_delays[tripid];
+				trip_cumulative_string << CH_YELLOW "Trip encountered a arrival schedule change, only accounting for first difference - Cumulative arrival delay for trip is now " << cumdiff << "  seconds. " CRESET;
 			}
 
 			if (all_delta_depature_time == INT_MAX) {
 				//there was no difference in data (this is ok)
-			} else {
+			} else if (all_delta_depature_time != INT_MIN) {
 				this->tracked_trips_depature_delays[tripid] += all_delta_depature_time;
 				if (all_delta_depature_time > 0)
 					trip_depatures_string << CH_YELLOW "Trip depatures are now " << all_delta_depature_time << " seconds delayed. " CRESET;
@@ -198,9 +214,15 @@ namespace nyctlib {
 				if (cumulative_depature_delay != all_delta_depature_time) {
 					trip_cumulative_string << CH_YELLOW "Cumulative depature delay for trip is now " << cumulative_depature_delay << "  seconds. " CRESET;
 				}
+			} else /* all_delta_depature_time == INT_MIN */ {
+				this->tracked_trips_depature_delays[tripid] += first_depature_diff_if_schedule_change;
+				auto cumdiff = this->tracked_trips_depature_delays[tripid];
+				trip_cumulative_string << CH_YELLOW "Trip encountered a depature schedule change, only accounting for first difference - Cumulative depature delay for trip is now " << cumdiff << "  seconds. " CRESET;
 			}
 
-
+			// Below only gets called if all arrivals/depatures change by a fixed amount, so we only print
+			// the difference once instead of them all. If arrivals/depatures change in a non-fixed manner,
+			// then print all the differences.
 			if (should_print_first_tripupdate_diff) {
 				LOG_TRIPSTATUS("%s %s\n", trip_arrivals_string.str().c_str(), trip_depatures_string.str().c_str());
 				if (trip_cumulative_string.tellp())
@@ -219,6 +241,15 @@ namespace nyctlib {
 			}
 		};
 
+		currentFeed->forEachVehicleUpdate([&](NYCTVehicleUpdate *vu) {
+			NYCTTrip *trip = (NYCTTrip*)vu->trip.get();
+
+			if (this->tracked_vehicles.find(trip->nyct_train_id) == this->tracked_vehicles.end()) {
+				this->tracked_vehicles[trip->nyct_train_id] = NYCTVehicleUpdate(*vu);
+			}
+		});
+
+		// Every vehicle feed above will also have a TripUpdate, however not every TU will have a VU (e.g. special non-revenue trips)
 		currentFeed->forEachTripUpdate([&](NYCTTripUpdate *tu) {
 			NYCTTrip *trip = (NYCTTrip*)tu->trip.get();
 			std::string trainid = trip->nyct_train_id;
@@ -229,8 +260,28 @@ namespace nyctlib {
 			}
 			
 			if (/*this->tracked_ticker [don't remember what this is] */true) {
-				if (this->tracked_trips.count(trainid) == 0) {
+				if (this->tracked_trips.find(trainid) == this->tracked_trips.end()) {
 					printf("NYCTTrainTracker: " CH_RED "New untracked train with ID '%s'" CRESET, trainid.c_str());
+					if (this->tracked_vehicles.find(trainid) != this->tracked_vehicles.end()) {
+						printf(" (at stop #%d)", this->tracked_vehicles[trainid].current_stop_index);
+					}
+					if (trainid.at(0) != '0') {
+						printf(CH_MAGENTA " (Non-Revenue");
+						switch (trainid.at(0)) {
+						case '=':
+							printf(" SERVICE REROUTE");
+							break;
+						case '/':
+							printf(" SKIP-STOP");
+							break;
+						case '$':
+							printf(" TURN TRAIN");
+							break;
+						default:
+							printf(" unknown trip purpose");
+						}
+						printf(")" CRESET);
+					}
 					if (!trip->nyct_is_assigned)
 						printf(" (UNASSIGNED)\n");
 					else
