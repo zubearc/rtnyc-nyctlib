@@ -298,6 +298,10 @@ namespace nyctlib {
 					}
 					compareTripUpdates(tracked_trips[trainid].stop_time_updates, tu->stop_time_updates, trainid);
 					unaccounted_trips.erase(trainid);
+					this->tracked_trips[trainid] = NYCTTripUpdate(*tu);
+					// the above is a very questionable line because it means we loose all the
+					// initial data for a trip -- perhaps we may want to store this data and changes
+					// until the trip is complete.
 				}
 			}
 		});
