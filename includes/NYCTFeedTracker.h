@@ -19,6 +19,7 @@ namespace nyctlib {
 
 		std::map<std::string /* ATS ID */, NYCTTripUpdate> tracked_trips;
 		std::map<std::string, /* Vehicle Data */ NYCTVehicleUpdate> tracked_vehicles;
+		std::map<std::string, std::vector<NYCTTripTimeUpdate>> initial_trip_schedule;
 		std::map<std::string /* ATS ID */, int /* Cumulative Delays */> tracked_trips_arrival_delays;
 		std::map<std::string /* ATS ID */, int /* Cumulative Delays */> tracked_trips_depature_delays;
 
