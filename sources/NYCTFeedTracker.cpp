@@ -246,10 +246,17 @@ namespace nyctlib {
 
 			if (this->tracked_vehicles.find(trip->nyct_train_id) == this->tracked_vehicles.end()) {
 				this->tracked_vehicles[trip->nyct_train_id] = NYCTVehicleUpdate(*vu);
+			} else /* already exists */ {
+				auto current = this->tracked_vehicles[trip->nyct_train_id];
+				if (current.current_stop_index != vu->current_stop_index) {
+					printf("NYCTFeedTracker: Train with ID '%s' is now at stop #%d, was at stop #%d\n", trip->nyct_train_id.c_str(), vu->current_stop_index, current.current_stop_index);
+				}
+				this->tracked_vehicles[trip->nyct_train_id] = NYCTVehicleUpdate(*vu);
 			}
 		});
 
 		// Every vehicle feed above will also have a TripUpdate, however not every TU will have a VU (e.g. special non-revenue trips)
+		// TODO: IF the above is *not* true, we will leak memory -- look into this
 		currentFeed->forEachTripUpdate([&](NYCTTripUpdate *tu) {
 			NYCTTrip *trip = (NYCTTrip*)tu->trip.get();
 			std::string trainid = trip->nyct_train_id;
