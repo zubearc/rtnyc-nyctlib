@@ -14,6 +14,9 @@ namespace nyctlib {
 
 		long long last_update_time;
 
+		std::map<std::string /* ATS ID */, NYCTTripUpdate> last_tracked_trips;
+		std::map<std::string, NYCTVehicleUpdate> last_tracked_vehicles;
+
 		std::map<std::string /* ATS ID */, NYCTTripUpdate> tracked_trips;
 		std::map<std::string, /* Vehicle Data */ NYCTVehicleUpdate> tracked_vehicles;
 		std::map<std::string /* ATS ID */, int /* Cumulative Delays */> tracked_trips_arrival_delays;
@@ -22,6 +25,8 @@ namespace nyctlib {
 		std::atomic<bool> active;
 
 		void clearTrackedDataForTrip(std::string tripid);
+
+		void processTripTimeUpdates(std::string tripid, std::vector<std::shared_ptr<GtfsTripTimeUpdate>> &old, std::vector<std::shared_ptr<GtfsTripTimeUpdate>> &current);
 	public:
 #ifndef _EMSCRIPTEN
 		NYCTFeedTracker() : feed(std::make_unique<NYCTFeedService>()) {}
