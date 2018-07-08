@@ -22,9 +22,44 @@
 #define CWHITE "\33[1;37m"
 #define CRESET "\33[0m"
 
-#define LOG_FT_DEBUG printf
-#define LOG_FT_INFO printf
-#define LOG_FT_WARN printf
+#define LOG_RAW_DEBUG printf
+#define LOG_RAW_INFO printf
+
+#ifdef _WIN32
+// thank you microsoft for not being standards-compliant
+// https://stackoverflow.com/a/17837382
+template <typename ...Args>
+void LOG_FT_DEBUG(const char *text, Args... args) {
+	fprintf(stdout, "DEBUG ");
+	fprintf(stdout, text, args...);
+}
+void LOG_FT_DEBUG(const char *text) {
+	fprintf(stdout, "DEBUG ");
+	fprintf(stdout, text);
+}
+template <typename ...Args>
+void LOG_FT_INFO(const char *text, Args... args) {
+	fprintf(stdout, "INFO ");
+	fprintf(stdout, text, args...);
+}
+void LOG_FT_INFO(const char *text) {
+	fprintf(stdout, "INFO ");
+	fprintf(stdout, text);
+}
+template <typename ...Args>
+void LOG_FT_WARN(const char *text, Args ...args) {
+	fprintf(stderr, "WARN ");
+	fprintf(stderr, text, args...);
+}
+void LOG_FT_WARN(const char *text) {
+	fprintf(stderr, "WARN ");
+	fprintf(stderr, text);
+}
+#else
+#define LOG_FT_DEBUG(...) fprintf(stdout, "DEBUG " __VA_ARGS__)
+#define LOG_FT_INFO(...) fprintf(stdout, "INFO " __VA_ARGS__)
+#define LOG_FT_WARN(...) fprintf(stderr, "WARN " __VA_ARGS__)
+#endif
 
 namespace nyctlib {
 	void NYCTFeedTracker::clearTrackedDataForTrip(std::string tripid) {
@@ -134,11 +169,11 @@ namespace nyctlib {
 
 				// am i not fucking clever for this trickery ?!
 				if (must_print_diffs > 0) {
-					LOG_FT_DEBUG("\nwas: ");
+					LOG_RAW_DEBUG("was: ");
 					printTripTimeData(*lT);
-					LOG_FT_DEBUG("\nnow: ");
+					LOG_RAW_DEBUG("\nnow: ");
 					printTripTimeData(*rT);
-					LOG_FT_DEBUG("\n");
+					LOG_RAW_DEBUG("\n");
 					must_print_diffs--;
 				}
 			}
@@ -198,17 +233,17 @@ namespace nyctlib {
 			LOG_TRIPSTATUS_WARN("%s %s\n", trip_arrivals_string.str().c_str(), trip_depatures_string.str().c_str());
 			if (trip_cumulative_string.tellp())
 				LOG_TRIPSTATUS_WARN("%s\n", trip_cumulative_string.str().c_str());
-			LOG_FT_DEBUG("was: ");
+			LOG_RAW_DEBUG("was: ");
 			printTripTimeData(*((NYCTTripTimeUpdate*)old[0].get()));
-			LOG_FT_DEBUG("\nnow: ");
+			LOG_RAW_DEBUG("\nnow: ");
 			printTripTimeData(*((NYCTTripTimeUpdate*)current[0].get()));
-			LOG_FT_DEBUG("\n");
+			LOG_RAW_DEBUG("\n");
 		}
 
 		for (auto i : old_map) {
 			LOG_FT_INFO("NYCTFeedTracker: LOSTTRIPTIME '%s' - train probably passed this stop.\n", tripid.c_str());
 			printTripTimeData(*i.second);
-			LOG_FT_INFO("\n");
+			LOG_RAW_DEBUG("\n");
 		}
 	}
 
@@ -259,29 +294,29 @@ namespace nyctlib {
 				if (this->tracked_trips.find(trainid) == this->tracked_trips.end()) {
 					LOG_FT_INFO("NYCTTrainTracker: " CH_RED "New untracked train with ID '%s'" CRESET, trainid.c_str());
 					if (this->tracked_vehicles.find(trainid) != this->tracked_vehicles.end()) {
-						LOG_FT_INFO(" (at stop #%d)", this->tracked_vehicles[trainid].current_stop_index);
+						LOG_RAW_INFO(" (at stop #%d)", this->tracked_vehicles[trainid].current_stop_index);
 					}
 					if (trainid.at(0) != '0') {
-						LOG_FT_INFO(CH_MAGENTA " (Non-Revenue");
+						LOG_RAW_INFO(CH_MAGENTA " (Non-Revenue");
 						switch (trainid.at(0)) {
 						case '=':
-							LOG_FT_INFO(" SERVICE REROUTE");
+							LOG_RAW_INFO(" SERVICE REROUTE");
 							break;
 						case '/':
-							LOG_FT_INFO(" SKIP-STOP");
+							LOG_RAW_INFO(" SKIP-STOP");
 							break;
 						case '$':
-							LOG_FT_INFO(" TURN TRAIN");
+							LOG_RAW_INFO(" TURN TRAIN");
 							break;
 						default:
-							LOG_FT_INFO(" unknown trip purpose");
+							LOG_RAW_INFO(" unknown trip purpose");
 						}
-						LOG_FT_INFO(")" CRESET);
+						LOG_RAW_INFO(")" CRESET);
 					}
 					if (!trip->nyct_is_assigned)
-						LOG_FT_INFO(" (UNASSIGNED)\n");
+						LOG_RAW_INFO(" (UNASSIGNED)\n");
 					else
-						LOG_FT_INFO("\n");
+						LOG_RAW_INFO("\n");
 					this->tracked_trips[trainid] = NYCTTripUpdate(*tu);
 				} else {
 					this->last_tracked_trips[trainid] = tracked_trips[trainid];
