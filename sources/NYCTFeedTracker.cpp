@@ -75,8 +75,8 @@ namespace nyctlib {
 
 	void NYCTFeedTracker::processTripTimeUpdates(std::string tripid, std::vector<std::shared_ptr<GtfsTripTimeUpdate>>& old, std::vector<std::shared_ptr<GtfsTripTimeUpdate>>& current) {
 
-#define LOG_TRIPSTATUS_WARN(arguments, ...) LOG_FT_WARN(("NYCTFeedTracker: \33[1;37m'%s'\33[0m: " arguments), tripid.c_str(), ##__VA_ARGS__)
-#define LOG_TRIPSTATUS_DEBUG(arguments, ...) LOG_FT_DEBUG(("NYCTFeedTracker: \33[1;37m'%s'\33[0m: " arguments), tripid.c_str(), ##__VA_ARGS__)
+#define LOG_TRIPSTATUS_WARN(arguments, ...) LOG_FT_WARN("NYCTFeedTracker: \33[1;37m'%s'\33[0m: " arguments, tripid.c_str(), ##__VA_ARGS__)
+#define LOG_TRIPSTATUS_DEBUG(arguments, ...) LOG_FT_DEBUG("NYCTFeedTracker: \33[1;37m'%s'\33[0m: " arguments, tripid.c_str(), ##__VA_ARGS__)
 
 		auto printTripTimeData = [](const NYCTTripTimeUpdate& l) {
 			LOG_FT_DEBUG("stop_id=%s, arrival_time=%lld, depature_time=%lld, scheduled_track=%s, actual_track=%s",
