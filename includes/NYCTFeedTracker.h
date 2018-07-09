@@ -28,6 +28,12 @@ namespace nyctlib {
 		void clearTrackedDataForTrip(std::string tripid);
 
 		void processTripTimeUpdates(std::string tripid, std::vector<std::shared_ptr<GtfsTripTimeUpdate>> &old, std::vector<std::shared_ptr<GtfsTripTimeUpdate>> &current);
+
+		int getStopIndexRelativeToInitialSchedule(std::string trip_id, std::string gtfs_stop_id);
+
+		inline int getTotalStopCountRelativeToInitialSchedule(std::string trip_id) {
+			return this->initial_trip_schedule[trip_id].size();
+		}
 	public:
 #ifndef _EMSCRIPTEN
 		NYCTFeedTracker() : feed(std::make_unique<NYCTFeedService>()) {}

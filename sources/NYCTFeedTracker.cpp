@@ -11,15 +11,17 @@
 #define SLEEP(x) usleep(x * 1000)
 #endif
 
-#define CH_GREEN "\33[0;91m"
-#define CH_RED "\33[0;92m"
+#define CH_GREEN "\33[0;92m"
+#define CH_RED "\33[0;91m"
 #define CH_YELLOW "\33[0;93m"
 #define CH_MAGENTA "\33[95m"
+#define CH_BLUE "\33[1;94m"
 #define CPURPLE "\33[0;35m"
 #define CGREEN "\33[0;32m"
 #define CYELLOW "\33[0;33m"
 #define CMAGENTA "\33[35m"
 #define CWHITE "\33[1;37m"
+#define CBLUE "\33[0;34m"
 #define CRESET "\33[0m"
 
 #define LOG_RAW_DEBUG printf
@@ -248,6 +250,23 @@ namespace nyctlib {
 		}
 	}
 
+	int NYCTFeedTracker::getStopIndexRelativeToInitialSchedule(std::string trip_id, std::string gtfs_stop_id) {
+		auto is = this->initial_trip_schedule[trip_id];
+		if (is.size() == 0) {
+			LOG_FT_DEBUG("Cannot return stop index for trip '%s' without any assigned schedule!\n", trip_id.c_str());
+			return -1;
+		}
+		
+		for (int i = 0; i < is.size(); i++) {
+			auto s = is[i];
+			if (s.stop_id == gtfs_stop_id) {
+				return i + 1; // trip id indexes always start at 1
+			}
+		}
+
+		return 0;
+	}
+
 	bool NYCTFeedTracker::update() {
 		feed->update();
 
@@ -255,6 +274,11 @@ namespace nyctlib {
 		
 		if (currentFeed == nullptr) {
 			printf("Cannot update because currentFeed was nullptr.\n");
+			return false;
+		}
+
+		if (currentFeed->getFeedTime() == 0) {
+			printf("Cannot accept currentFeed because its timestamp was 0.\n");
 			return false;
 		}
 
@@ -266,6 +290,14 @@ namespace nyctlib {
 
 		currentFeed->forEachVehicleUpdate([&](NYCTVehicleUpdate *vu) {
 			NYCTTrip *trip = (NYCTTrip*)vu->trip.get();
+
+			// The following below must never be true -- if it is, we probably have bad data!!
+			// assert(trip->nyct_train_id != "");
+
+			if (trip->nyct_train_id == "") {
+				LOG_FT_WARN(CH_RED "Invalid Vehicle Update: NYCT Trip ID must never be null.\n");
+				return;
+			}
 
 			if (this->tracked_vehicles.find(trip->nyct_train_id) == this->tracked_vehicles.end()) {
 				this->tracked_vehicles[trip->nyct_train_id] = NYCTVehicleUpdate(*vu);
@@ -298,9 +330,9 @@ namespace nyctlib {
 			
 			if (/*this->tracked_ticker [don't remember what this is] */true) {
 				if (this->tracked_trips.find(trainid) == this->tracked_trips.end()) {
-					LOG_FT_INFO("NYCTTrainTracker: " CH_RED "New untracked train with ID '%s'" CRESET, trainid.c_str());
+					LOG_FT_INFO("NYCTTrainTracker: " CH_GREEN "New untracked train with ID '%s'" CRESET, trainid.c_str());
 					if (this->tracked_vehicles.find(trainid) != this->tracked_vehicles.end()) {
-						LOG_RAW_INFO(" (at stop #%d)", this->tracked_vehicles[trainid].current_stop_index);
+						LOG_RAW_INFO(" (at stop #%d/%d)", this->tracked_vehicles[trainid].current_stop_index, tu->stop_time_updates.size());
 					}
 					if (trainid.at(0) != '0') {
 						LOG_RAW_INFO(CH_MAGENTA " (Non-Revenue");
@@ -343,7 +375,8 @@ namespace nyctlib {
 					}
 					
 					if (!oldtrip->nyct_is_assigned && trip->nyct_is_assigned) {
-						LOG_FT_INFO("NYCTTrainTracker: " CGREEN "Formerly unassigned trip with ID '%s' is now assigned.\n" CRESET, trainid.c_str());
+						LOG_FT_INFO("NYCTTrainTracker: " CGREEN "Formerly unassigned trip with ID '%s' is now assigned. " CRESET "(at stop #%d/#%d)\n", 
+							trainid.c_str(), this->tracked_vehicles[trainid].current_stop_index, tu->stop_time_updates.size());
 						if (this->initial_trip_schedule[trainid].size() == 0) {
 							LOG_FT_WARN("NYCTrainTracker: " CYELLOW "Trip ID '%s' was assigned without any stop time updates\n" CRESET, trainid.c_str());
 						}
@@ -358,11 +391,39 @@ namespace nyctlib {
 			}
 		});
 
+		// if we loose track of more than 10 trips within 45 sec, something probably went wrong
+		// unless 10 trains got to their terminals in less than a minute. more likely we got bad data.
+		auto time_diff_from_last = currentFeed->getFeedTime() - this->last_update_time;
+		if (unaccounted_trips.size() > 10 && time_diff_from_last <= 45) {
+			LOG_FT_WARN("NYCTFeedTracker: " CH_RED "Too many trains are now unaccounted for -- refusing to drop tracking: %d > 10\n", unaccounted_trips.size());
+			return false;
+		}
+
 		for (auto unaccounted_trip : unaccounted_trips) {
-			LOG_FT_INFO("NYCTTrainTracker: " CH_GREEN "Lost track of trip '%s'" CRESET "\n", unaccounted_trip.first.c_str());
+			auto tripid = unaccounted_trip.first;
+			if (this->tracked_vehicles.find(tripid) != this->tracked_vehicles.end()) {
+				auto current_stop_index = this->tracked_vehicles[tripid].current_stop_index;
+				auto scheduled_stop_count = this->getTotalStopCountRelativeToInitialSchedule(tripid);
+				auto last_accounted_stop_id = this->tracked_vehicles[tripid].stop_id;
+				auto its = this->initial_trip_schedule[tripid];
+				auto scheduled_terminal_stop_id = its[(int)its.size() - 1].stop_id;
+
+				if (last_accounted_stop_id == scheduled_terminal_stop_id) {
+					LOG_FT_INFO("NYCTrainTracker: " CH_BLUE "Trip '%s' is complete and has reached its scheduled terminal.\n" CRESET, tripid.c_str());
+				} else {
+					LOG_FT_INFO("NYCTTrainTracker: " CH_RED "Lost track of trip '%s'" CRESET "\n", tripid.c_str());
+				}
+
+				LOG_FT_DEBUG("NYCTTrainTracker: Index was %d/%d (%s/%s)\n", 
+					current_stop_index,
+					scheduled_stop_count,
+					last_accounted_stop_id.c_str(),
+					scheduled_terminal_stop_id.c_str());
+			}
 			//unaccounted_trip.second.stop_time_updates.at(0)->stop_id;
 			this->clearTrackedDataForTrip(unaccounted_trip.first);
 		}
+		this->last_update_time = currentFeed->getFeedTime();
 		return true;
 	}
 
