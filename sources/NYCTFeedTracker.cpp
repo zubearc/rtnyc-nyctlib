@@ -5,9 +5,11 @@
 
 #ifdef _WIN32
 #include <windows.h>
+// Sleep for a given number of milliseconds
 #define SLEEP Sleep
 #else
 #include <unistd.h>
+// Sleep for a given number of milliseconds
 #define SLEEP(x) usleep(x * 1000)
 #endif
 
@@ -395,7 +397,7 @@ namespace nyctlib {
 		// unless 10 trains got to their terminals in less than a minute. more likely we got bad data.
 		auto time_diff_from_last = currentFeed->getFeedTime() - this->last_update_time;
 		if (unaccounted_trips.size() > 10 && time_diff_from_last <= 45) {
-			LOG_FT_WARN("NYCTFeedTracker: " CH_RED "Too many trains are now unaccounted for -- refusing to drop tracking: %d > 10\n", unaccounted_trips.size());
+			LOG_FT_WARN("NYCTFeedTracker: " CH_RED "Too many trains are now unaccounted for -- refusing to drop tracking: %d > 10\n" CRESET, unaccounted_trips.size());
 			return false;
 		}
 
@@ -431,15 +433,22 @@ namespace nyctlib {
 		while (this->active) {
 			bool ret = this->update();
 			if (!ret) {
-				SLEEP(1000);
+				SLEEP(1500);
 				this->update(); // try once more if we fail first time
 								// this may happen if the server goes breifly offline
-
 			}
-			//todo: sleep until 20 seconds after the lastest feed update relative to last TS
-			// MTA updates their feeds every 15 seconds
-			printf("done, going back to sleep. zzz.\n");
-			SLEEP(15000);
+			
+			auto next_update = this->last_update_time + 24;
+			long long timenow = time(NULL);
+			auto sleep_for_seconds = next_update - timenow;
+			sleep_for_seconds = max(1, sleep_for_seconds);
+			sleep_for_seconds = min(15, sleep_for_seconds);
+			// above is range function to ensure seconds is in [1,15]
+
+			// MTA updates their feeds every 15 seconds, we check back the data every 24 seconds
+			// which appears to be a good wait period to allow the server to update + serve data
+			printf("done, going back to sleep for %d seconds. zzz.\n", sleep_for_seconds);
+			SLEEP(sleep_for_seconds * 1000);
 		}
 	}
 
