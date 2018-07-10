@@ -7,6 +7,7 @@
 #include "gtfs/NYCTFeedParser.h"
 #include "NYCTFeedTracker.h"
 #include "NYCTFeedService.h"
+#include "ReplayFeedService.h"
 #include "DynamicNYCTFeedService.h"
 #include "interfaces/ConsoleInterface.h"
 
@@ -15,7 +16,7 @@
 #include <Windows.h>
 #endif
 
-int g_logging_level = LogWarn;
+int g_logging_level = LogWarn | LogInfo | LogDebug;
 FILE *g_logging_output_pointer = stdout;
 
 using namespace std;
@@ -45,6 +46,13 @@ int main(int argc, char *argv[])
 
 	if (argc == 1) {
 		auto feedService = std::unique_ptr<nyctlib::IFeedService>((nyctlib::IFeedService*)new nyctlib::DynamicNYCTFeedService());
+		
+/*		auto rfs = new ReplayFeedService<NYCTFeedParser>("C:/Users/Extreme/CMakeBuilds/9a20cf93-1bae-a730-96f6-0e9e11475965/build/x86-Debug", "gtfs_nycts");
+		rfs->jumpTo("gtfs_nycts_1531197614.bin");
+		rfs->setMaximumPlaybacks(1);
+			
+		auto feedService = std::unique_ptr<IFeedService>((IFeedService*)rfs);
+*/		
 		nyctlib::NYCTFeedTracker nyctFeedTracker(std::move(feedService));
 
 		//auto trips = nyctFeedTracker.getTripsScheduledToArriveAtStop("217S");
