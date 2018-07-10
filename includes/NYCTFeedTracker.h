@@ -14,15 +14,21 @@ namespace nyctlib {
 
 		long long last_update_time;
 
-		std::map<std::string /* ATS ID */, NYCTTripUpdate> last_tracked_trips;
-		std::map<std::string, NYCTVehicleUpdate> last_tracked_vehicles;
+		struct TrackedTrip {
+			int cumulative_arrival_delay = 0;
+			int cumulative_depature_delay = 0;
 
-		std::map<std::string /* ATS ID */, NYCTTripUpdate> tracked_trips;
-		std::map<std::string, /* Vehicle Data */ NYCTVehicleUpdate> tracked_vehicles;
-		std::map<std::string, std::vector<NYCTTripTimeUpdate>> initial_trip_schedule;
-		std::map<std::string /* ATS ID */, int /* Cumulative Delays */> tracked_trips_arrival_delays;
-		std::map<std::string /* ATS ID */, int /* Cumulative Delays */> tracked_trips_depature_delays;
+			NYCTTripUpdate last_tracked_trip;
+			NYCTVehicleUpdate last_tracked_vehicle;
 
+			NYCTTripUpdate old_tracked_trip;
+
+			std::vector<NYCTTripTimeUpdate> initial_trip_schedule;
+
+			std::vector<std::tuple<std::string, long long>> confirmed_stops;
+		};
+
+		std::map<std::string /* ATS ID */, TrackedTrip> tracked_trips2;
 		std::atomic<bool> active;
 
 		void clearTrackedDataForTrip(std::string tripid);
@@ -30,10 +36,6 @@ namespace nyctlib {
 		void processTripTimeUpdates(std::string tripid, std::vector<std::shared_ptr<GtfsTripTimeUpdate>> &old, std::vector<std::shared_ptr<GtfsTripTimeUpdate>> &current);
 
 		int getStopIndexRelativeToInitialSchedule(std::string trip_id, std::string gtfs_stop_id);
-
-		inline int getTotalStopCountRelativeToInitialSchedule(std::string trip_id) {
-			return this->initial_trip_schedule[trip_id].size();
-		}
 	public:
 #ifndef _EMSCRIPTEN
 		NYCTFeedTracker() : feed(std::make_unique<NYCTFeedService>()) {}
@@ -51,6 +53,13 @@ namespace nyctlib {
 
 		inline IFeedService* getFeedService() {
 			return feed.get();
+		}
+
+		inline NYCTTripUpdate getTrackedTripUpdate(std::string ats_trip_id) {
+			if (this->tracked_trips2.find(ats_trip_id) != this->tracked_trips2.end()) {
+				return this->tracked_trips2[ats_trip_id].last_tracked_trip;
+			}
+			throw std::invalid_argument("no such trip id is currently tracked");
 		}
 
 		std::vector<NYCTTripUpdate> getTripsScheduledToArriveAtStop(std::string station_id);

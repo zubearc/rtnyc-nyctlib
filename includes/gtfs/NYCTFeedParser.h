@@ -20,6 +20,11 @@ namespace nyctlib {
 
 	struct NYCTVehicleUpdate : GtfsVehicleUpdate {
 		NYCTTrip nyct_trip;
+		inline operator bool() const {
+			if (!this->trip)
+				return false;
+			return true;
+		}
 	};
 
 	struct NYCTTripUpdate : GtfsTripUpdate {
@@ -38,6 +43,12 @@ namespace nyctlib {
 			if (this->trip->trip_id != this->trip->trip_id) {
 				return false;
 			}
+			return true;
+		}
+
+		inline operator bool() const {
+			if (!this->trip)
+				return false;
 			return true;
 		}
 	};

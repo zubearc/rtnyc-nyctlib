@@ -17,12 +17,7 @@
 
 namespace nyctlib {
 	void NYCTFeedTracker::clearTrackedDataForTrip(std::string tripid) {
-		this->tracked_trips.erase(tripid);
-		this->tracked_trips_arrival_delays.erase(tripid);
-		this->tracked_trips_depature_delays.erase(tripid);
-		this->last_tracked_trips.erase(tripid);
-		this->last_tracked_vehicles.erase(tripid);
-		this->initial_trip_schedule.erase(tripid);
+		this->tracked_trips2.erase(tripid);
 	}
 
 	void NYCTFeedTracker::processTripTimeUpdates(std::string tripid, std::vector<std::shared_ptr<GtfsTripTimeUpdate>>& old, std::vector<std::shared_ptr<GtfsTripTimeUpdate>>& current) {
@@ -145,39 +140,39 @@ namespace nyctlib {
 			//there was no difference in data (this is ok)
 			//printf("NYCTFeedTracker: No stop arrival time updates for trip?\n");
 		} else if (all_delta_arrival_time != INT_MIN) {
-			this->tracked_trips_arrival_delays[tripid] += all_delta_arrival_time;
+			this->tracked_trips2[tripid].cumulative_arrival_delay += all_delta_arrival_time;
 			if (all_delta_arrival_time > 0)
 				trip_arrivals_string << CH_YELLOW "Trip arrivals are now " << all_delta_arrival_time << " seconds delayed. " CRESET;
 			else if (all_delta_arrival_time < 0)
 				trip_arrivals_string << CYELLOW "Trip arrivals are now " << -all_delta_arrival_time << " seconds early. " CRESET;
 			should_print_first_tripupdate_diff = true;
-			auto cumulative_arrival_delay = this->tracked_trips_arrival_delays[tripid];
+			auto cumulative_arrival_delay = this->tracked_trips2[tripid].cumulative_arrival_delay;
 			if (cumulative_arrival_delay != all_delta_arrival_time) {
 				trip_cumulative_string << CH_YELLOW "Cumulative arrival delay for trip is now " << cumulative_arrival_delay << "  seconds. " CRESET;
 			}
 		} else /* all_delta_arrival_time == INT_MIN */ {
-			this->tracked_trips_arrival_delays[tripid] += first_arrival_diff_if_schedule_change;
-			auto cumdiff = this->tracked_trips_arrival_delays[tripid];
+			this->tracked_trips2[tripid].cumulative_arrival_delay += first_arrival_diff_if_schedule_change;
+			auto cumdiff = this->tracked_trips2[tripid].cumulative_arrival_delay;
 			trip_cumulative_string << CH_YELLOW "Trip encountered a arrival schedule change, only accounting for first difference - Cumulative arrival delay for trip is now " << cumdiff << "  seconds. " CRESET;
 		}
 
 		if (all_delta_depature_time == INT_MAX) {
 			//there was no difference in data (this is ok)
 		} else if (all_delta_depature_time != INT_MIN) {
-			this->tracked_trips_depature_delays[tripid] += all_delta_depature_time;
+			this->tracked_trips2[tripid].cumulative_depature_delay += all_delta_depature_time;
 			if (all_delta_depature_time > 0)
 				trip_depatures_string << CH_YELLOW "Trip depatures are now " << all_delta_depature_time << " seconds delayed. " CRESET;
 			else if (all_delta_arrival_time < 0)
 				trip_depatures_string << CYELLOW "Trip depatures are now " << -all_delta_depature_time << " seconds early. " CRESET;
 			should_print_first_tripupdate_diff = true;
 
-			auto cumulative_depature_delay = this->tracked_trips_depature_delays[tripid];
+			auto cumulative_depature_delay = this->tracked_trips2[tripid].cumulative_depature_delay;
 			if (cumulative_depature_delay != all_delta_depature_time) {
 				trip_cumulative_string << CH_YELLOW "Cumulative depature delay for trip is now " << cumulative_depature_delay << "  seconds. " CRESET;
 			}
 		} else /* all_delta_depature_time == INT_MIN */ {
-			this->tracked_trips_depature_delays[tripid] += first_depature_diff_if_schedule_change;
-			auto cumdiff = this->tracked_trips_depature_delays[tripid];
+			this->tracked_trips2[tripid].cumulative_depature_delay += first_depature_diff_if_schedule_change;
+			auto cumdiff = this->tracked_trips2[tripid].cumulative_depature_delay;
 			trip_cumulative_string << CH_YELLOW "Trip encountered a depature schedule change, only accounting for first difference - Cumulative depature delay for trip is now " << cumdiff << "  seconds. " CRESET;
 		}
 
@@ -203,7 +198,8 @@ namespace nyctlib {
 	}
 
 	int NYCTFeedTracker::getStopIndexRelativeToInitialSchedule(std::string trip_id, std::string gtfs_stop_id) {
-		auto is = this->initial_trip_schedule[trip_id];
+		assert(this->tracked_trips2.find(trip_id) != this->tracked_trips2.end());
+		auto is = this->tracked_trips2[trip_id].initial_trip_schedule;
 		if (is.size() == 0) {
 			LOG_FT_DEBUG("Cannot return stop index for trip '%s' without any assigned schedule!\n", trip_id.c_str());
 			return -1;
@@ -237,8 +233,7 @@ namespace nyctlib {
 		//this->last_tracked_trips.clear();
 		//this->last_tracked_vehicles.clear();
 
-		auto unaccounted_trips = this->tracked_trips;
-
+		auto unaccounted_trips = this->tracked_trips2;
 
 		currentFeed->forEachVehicleUpdate([&](NYCTVehicleUpdate *vu) {
 			NYCTTrip *trip = (NYCTTrip*)vu->trip.get();
@@ -246,26 +241,64 @@ namespace nyctlib {
 			// The following below must never be true -- if it is, we probably have bad data!!
 			// assert(trip->nyct_train_id != "");
 
-			if (trip->nyct_train_id == "") {
+			auto tripid = trip->nyct_train_id;
+
+			if (tripid == "") {
 				LOG_FT_WARN(CH_RED "Invalid Vehicle Update: NYCT Trip ID must never be null.\n");
 				return;
 			}
 
-			if (this->tracked_vehicles.find(trip->nyct_train_id) == this->tracked_vehicles.end()) {
-				this->tracked_vehicles[trip->nyct_train_id] = NYCTVehicleUpdate(*vu);
-			} else /* already exists */ {
-				this->last_tracked_vehicles[trip->nyct_train_id] = this->tracked_vehicles[trip->nyct_train_id];
-				auto &current = this->last_tracked_vehicles[trip->nyct_train_id];
+			if (this->tracked_trips2.find(tripid) == this->tracked_trips2.end()) {
+				this->tracked_trips2[tripid].last_tracked_vehicle = NYCTVehicleUpdate(*vu);
+			} else {
+				auto &tracked = this->tracked_trips2[tripid];
+				auto &tracked_trip = tracked.last_tracked_vehicle;
 
-				if (current.current_stop_index != vu->current_stop_index) {
-					LOG_FT_DEBUG("NYCTFeedTracker: Train with ID '%s' is now at stop #%d, was at stop #%d\n", trip->nyct_train_id.c_str(), vu->current_stop_index, current.current_stop_index);
+				auto original_trip_schedule = tracked.initial_trip_schedule;
+				auto old_stop_progress = tracked_trip.stop_progress;
+				auto current_stop_progress = vu->stop_progress;
+
+				if (current_stop_progress == GtfsVehicleProgress::AtStation) {
+					bool found_trip = false;
+					for (auto schedule_item : original_trip_schedule) {
+						if (schedule_item.stop_id == vu->stop_id) {
+							found_trip = true;
+						}
+					}
+
+					if (found_trip) {
+						LOG_FT_DEBUG("Trip '%s' at stop '%s' as per schedule.\n",
+							trip->nyct_train_id.c_str(), vu->stop_id.c_str());
+						tracked.confirmed_stops.push_back(std::make_tuple(vu->stop_id, vu->timestamp));
+					} else {
+						LOG_FT_WARN(CH_YELLOW "Trip '%s' is stopping at stop '%s', was not on the original schedule.\n" CRESET,
+							trip->nyct_train_id.c_str(), vu->stop_id.c_str());
+						tracked.confirmed_stops.push_back(std::make_tuple(vu->stop_id, vu->timestamp));
+					}
+				}
+
+				auto getStopProgressString = [](GtfsVehicleProgress progress) {
+					if (progress == GtfsVehicleProgress::ApproachingStation) {
+						return "approaching";
+					}
+					else if (progress == GtfsVehicleProgress::AtStation) {
+						return "at";
+					}
+					else if (progress == GtfsVehicleProgress::EnrouteToStation) {
+						return "enroute to";
+					}
+					return "unknown";
+				};
+
+				if (tracked_trip.current_stop_index != vu->current_stop_index) {
+					LOG_FT_DEBUG("NYCTFeedTracker: Trip '%s' is now %s stop #%d, was previously %s stop #%d\n", trip->nyct_train_id.c_str(), getStopProgressString(current_stop_progress), vu->current_stop_index, getStopProgressString(old_stop_progress), tracked_trip.current_stop_index);
 				}
 
 				if (vu->current_stop_index == 1) {
-					LOG_FT_DEBUG("Trip '%s' is at its first stop!\n", trip->nyct_train_id.c_str());
+					LOG_FT_DEBUG("Trip '%s' is at its first stop!\n", tripid.c_str());
 				}
 
-				this->tracked_vehicles[trip->nyct_train_id] = NYCTVehicleUpdate(*vu);
+				tracked.last_tracked_vehicle = NYCTVehicleUpdate(*vu);
 			}
 		});
 
@@ -279,13 +312,25 @@ namespace nyctlib {
 				LOG_FT_INFO("NYCTTrainTracker: " CPURPLE "Not tracking an unassigned trip with no stop time updates with ID '%s'.\n" CRESET, trainid.c_str());
 				return;
 			}
+
+			bool no_vechicle_info = false;
+
+			if (this->tracked_trips2.find(trainid) == this->tracked_trips2.end()) {
+				// New Train Without Any Vehicle Data
+				no_vechicle_info = true;
+			}
 			
-			if (/*this->tracked_ticker [don't remember what this is] */true) {
-				if (this->tracked_trips.find(trainid) == this->tracked_trips.end()) {
+			{
+				auto &tracked_trip = this->tracked_trips2[trainid]; // created if not exists
+
+				if (!tracked_trip.last_tracked_trip) {
 					LOG_FT_INFO("NYCTTrainTracker: " CH_GREEN "New untracked train with ID '%s'" CRESET, trainid.c_str());
-					if (this->tracked_vehicles.find(trainid) != this->tracked_vehicles.end()) {
-						LOG_RAW_INFO(" (at stop #%d/%d)", this->tracked_vehicles[trainid].current_stop_index, tu->stop_time_updates.size());
+
+
+					if (tracked_trip.last_tracked_vehicle) {
+						LOG_RAW_INFO(" (at stop #%d/%d)", tracked_trip.last_tracked_vehicle.current_stop_index, tu->stop_time_updates.size());
 					}
+
 					if (trainid.at(0) != '0') {
 						LOG_RAW_INFO(CH_MAGENTA " (Non-Revenue");
 						switch (trainid.at(0)) {
@@ -303,42 +348,43 @@ namespace nyctlib {
 						}
 						LOG_RAW_INFO(")" CRESET);
 					}
+
 					if (!trip->nyct_is_assigned) {
 						LOG_RAW_INFO(" (UNASSIGNED)\n");
 					} else {
 						LOG_RAW_INFO("\n");
 						for (auto stu : tu->stop_time_updates) {
 							auto s = (NYCTTripTimeUpdate*)stu.get();
-							this->initial_trip_schedule[trainid].push_back(NYCTTripTimeUpdate(*s));
+							tracked_trip.initial_trip_schedule.push_back(NYCTTripTimeUpdate(*s));
 						}
 					}
-					this->tracked_trips[trainid] = NYCTTripUpdate(*tu);
+					tracked_trip.last_tracked_trip = NYCTTripUpdate(*tu);
 				} else {
-					this->last_tracked_trips[trainid] = tracked_trips[trainid];
+					tracked_trip.old_tracked_trip = tracked_trip.last_tracked_trip;
 
-					NYCTTrip *oldtrip = (NYCTTrip*)tracked_trips[trainid].trip.get();
+					NYCTTrip *oldtrip = (NYCTTrip*)tracked_trip.last_tracked_trip.trip.get();
 
-					if (this->initial_trip_schedule[trainid].size() == 0 && tu->stop_time_updates.size() > 0) {
+					if (tracked_trip.initial_trip_schedule.size() == 0 && tu->stop_time_updates.size() > 0) {
 						LOG_FT_DEBUG("NYCTTrainTracker: Now have initial trip data for trip ID '%s'\n", trainid.c_str());
 						for (auto stu : tu->stop_time_updates) {
 							auto s = (NYCTTripTimeUpdate*)stu.get();
-							this->initial_trip_schedule[trainid].push_back(NYCTTripTimeUpdate(*s));
+							tracked_trip.initial_trip_schedule.push_back(NYCTTripTimeUpdate(*s));
 						}
 					}
-					
+
 					if (!oldtrip->nyct_is_assigned && trip->nyct_is_assigned) {
-						LOG_FT_INFO("NYCTTrainTracker: " CGREEN "Formerly unassigned trip with ID '%s' is now assigned. " CRESET "(at stop #%d/#%d)\n", 
-							trainid.c_str(), this->tracked_vehicles[trainid].current_stop_index, tu->stop_time_updates.size());
-						if (this->initial_trip_schedule[trainid].size() == 0) {
+						LOG_FT_INFO("NYCTTrainTracker: " CGREEN "Formerly unassigned trip with ID '%s' is now assigned. " CRESET "(at stop #%d/#%d)\n",
+							trainid.c_str(), tracked_trip.last_tracked_vehicle.current_stop_index, tu->stop_time_updates.size());
+						if (tracked_trip.initial_trip_schedule.size() == 0) {
 							LOG_FT_WARN("NYCTrainTracker: " CYELLOW "Trip ID '%s' was assigned without any stop time updates\n" CRESET, trainid.c_str());
 						}
 					} else if (oldtrip->nyct_is_assigned && !trip->nyct_is_assigned) {
 						LOG_FT_WARN("NYCTTrainTracker: " CH_MAGENTA "Trip id '%s' is now unassigned?!\n" CRESET, trainid.c_str());
 					}
 
-					this->processTripTimeUpdates(trainid, tracked_trips[trainid].stop_time_updates, tu->stop_time_updates);
+					this->processTripTimeUpdates(trainid, tracked_trip.last_tracked_trip.stop_time_updates, tu->stop_time_updates);
 					unaccounted_trips.erase(trainid);
-					this->tracked_trips[trainid] = NYCTTripUpdate(*tu);
+					tracked_trip.last_tracked_trip = NYCTTripUpdate(*tu);
 				}
 			}
 		});
@@ -353,11 +399,13 @@ namespace nyctlib {
 
 		for (auto unaccounted_trip : unaccounted_trips) {
 			auto tripid = unaccounted_trip.first;
-			if (this->tracked_vehicles.find(tripid) != this->tracked_vehicles.end()) {
-				auto current_stop_index = this->tracked_vehicles[tripid].current_stop_index;
-				auto scheduled_stop_count = this->getTotalStopCountRelativeToInitialSchedule(tripid);
-				auto last_accounted_stop_id = this->tracked_vehicles[tripid].stop_id;
-				auto its = this->initial_trip_schedule[tripid];
+			auto tracked = unaccounted_trip.second;
+			if (tracked.last_tracked_vehicle) {
+				auto tracked_vech = tracked.last_tracked_vehicle;
+				auto current_stop_index = tracked_vech.current_stop_index;
+				auto scheduled_stop_count = tracked.initial_trip_schedule.size();
+				auto last_accounted_stop_id = tracked_vech.stop_id;
+				auto its = tracked.initial_trip_schedule;
 				auto scheduled_terminal_stop_id = its[(int)its.size() - 1].stop_id;
 
 				if (last_accounted_stop_id == scheduled_terminal_stop_id) {
@@ -366,15 +414,16 @@ namespace nyctlib {
 					LOG_FT_INFO("NYCTTrainTracker: " CH_RED "Lost track of trip '%s'" CRESET "\n", tripid.c_str());
 				}
 
-				LOG_FT_DEBUG("NYCTTrainTracker: Index was %d/%d (%s/%s)\n", 
+				LOG_FT_DEBUG("NYCTTrainTracker: Index was %d/%d (%s/%s)\n",
 					current_stop_index,
 					scheduled_stop_count,
 					last_accounted_stop_id.c_str(),
 					scheduled_terminal_stop_id.c_str());
 			}
-			//unaccounted_trip.second.stop_time_updates.at(0)->stop_id;
+
 			this->clearTrackedDataForTrip(unaccounted_trip.first);
 		}
+
 		this->last_update_time = currentFeed->getFeedTime();
 		return true;
 	}
