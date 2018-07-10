@@ -8,15 +8,20 @@
 #include "NYCTFeedTracker.h"
 #include "NYCTFeedService.h"
 #include "DynamicNYCTFeedService.h"
+#include "interfaces/ConsoleInterface.h"
 
 #include <stdlib.h>
 #ifdef _WIN32
 #include <Windows.h>
 #endif
 
-using namespace std;
+int g_logging_level = LogWarn;
+FILE *g_logging_output_pointer = stdout;
 
-int main()
+using namespace std;
+using namespace nyctlib;
+
+int main(int argc, char *argv[])
 {
 	cout << "Hello CMake." << endl;
 
@@ -38,15 +43,22 @@ int main()
 #endif
 	gtfsFeedParser.dumpOut();*/
 
-	auto feedService = std::unique_ptr<nyctlib::IFeedService>((nyctlib::IFeedService*)new nyctlib::DynamicNYCTFeedService());
-	nyctlib::NYCTFeedTracker nyctFeedTracker(std::move(feedService));
-	
-	//auto trips = nyctFeedTracker.getTripsScheduledToArriveAtStop("217S");
-	nyctFeedTracker.run();
-	nyctFeedTracker.printTripsScheduledToArriveAtStop("217S");
+	if (argc == 1) {
+		auto feedService = std::unique_ptr<nyctlib::IFeedService>((nyctlib::IFeedService*)new nyctlib::DynamicNYCTFeedService());
+		nyctlib::NYCTFeedTracker nyctFeedTracker(std::move(feedService));
 
-	//nyctlib::GtfsFeedParser ferryFeedParser;
-	//ferryFeedParser.loadFile("H:/Users/Extreme/Development/Projects/NYCT/DataArchives/gtfs_ferry_tripupdate.bin");
+		//auto trips = nyctFeedTracker.getTripsScheduledToArriveAtStop("217S");
+		nyctFeedTracker.run();
+		nyctFeedTracker.printTripsScheduledToArriveAtStop("217S");
+
+		//nyctlib::GtfsFeedParser ferryFeedParser;
+		//ferryFeedParser.loadFile("H:/Users/Extreme/Development/Projects/NYCT/DataArchives/gtfs_ferry_tripupdate.bin");
+//		nyctlib::GtfsFeedParser busFeedParser;
+//		busFeedParser.loadFile("H:/Users/Extreme/Development/Projects/NYCTBus/DataArchives/tripUpdates");
+	} else {
+		ConsoleInterface ci;
+		ci.run(argc, argv);
+	}
 
 	system("pause");
 	return 0;

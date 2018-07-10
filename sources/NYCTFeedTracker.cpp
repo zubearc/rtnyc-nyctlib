@@ -13,57 +13,7 @@
 #define SLEEP(x) usleep(x * 1000)
 #endif
 
-#define CH_GREEN "\33[0;92m"
-#define CH_RED "\33[0;91m"
-#define CH_YELLOW "\33[0;93m"
-#define CH_MAGENTA "\33[95m"
-#define CH_BLUE "\33[1;94m"
-#define CPURPLE "\33[0;35m"
-#define CGREEN "\33[0;32m"
-#define CYELLOW "\33[0;33m"
-#define CMAGENTA "\33[35m"
-#define CWHITE "\33[1;37m"
-#define CBLUE "\33[0;34m"
-#define CRESET "\33[0m"
-
-#define LOG_RAW_DEBUG printf
-#define LOG_RAW_INFO printf
-
-#ifdef _WIN32
-// thank you microsoft for not being standards-compliant
-// https://stackoverflow.com/a/17837382
-template <typename ...Args>
-void LOG_FT_DEBUG(const char *text, Args... args) {
-	fprintf(stdout, "DEBUG ");
-	fprintf(stdout, text, args...);
-}
-void LOG_FT_DEBUG(const char *text) {
-	fprintf(stdout, "DEBUG ");
-	fprintf(stdout, text);
-}
-template <typename ...Args>
-void LOG_FT_INFO(const char *text, Args... args) {
-	fprintf(stdout, "INFO ");
-	fprintf(stdout, text, args...);
-}
-void LOG_FT_INFO(const char *text) {
-	fprintf(stdout, "INFO ");
-	fprintf(stdout, text);
-}
-template <typename ...Args>
-void LOG_FT_WARN(const char *text, Args ...args) {
-	fprintf(stderr, "WARN ");
-	fprintf(stderr, text, args...);
-}
-void LOG_FT_WARN(const char *text) {
-	fprintf(stderr, "WARN ");
-	fprintf(stderr, text);
-}
-#else
-#define LOG_FT_DEBUG(...) fprintf(stdout, "DEBUG " __VA_ARGS__)
-#define LOG_FT_INFO(...) fprintf(stdout, "INFO " __VA_ARGS__)
-#define LOG_FT_WARN(...) fprintf(stderr, "WARN " __VA_ARGS__)
-#endif
+#include "Logging.h"
 
 namespace nyctlib {
 	void NYCTFeedTracker::clearTrackedDataForTrip(std::string tripid) {

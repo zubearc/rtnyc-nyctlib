@@ -33,7 +33,9 @@ else()
 	find_package(CURL REQUIRED)
 	message("CURL install dir is ${CURL_INCLUDE_DIR}")
 	# Add source to this project's executable.
-	add_executable(NYCTLib ${NYCTLIB_SOURCES} "NYCTLib.cpp" "NYCTLib.h" "sources/DynamicNYCTFeedService.cpp")
+	add_executable(NYCTLib ${NYCTLIB_SOURCES} "NYCTLib.cpp" "NYCTLib.h" 
+		"sources/DynamicNYCTFeedService.cpp"
+		"sources/interfaces/ConsoleInterface.cpp")
 	target_link_libraries(NYCTLib PRIVATE ${CURL_LIBRARIES})
 	include_directories(${CURL_INCLUDE_DIRS})
 endif()
