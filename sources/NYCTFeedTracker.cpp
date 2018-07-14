@@ -191,9 +191,20 @@ namespace nyctlib {
 		}
 
 		for (auto i : old_map) {
-			LOG_FT_INFO("NYCTFeedTracker: LOSTTRIPTIME '%s' - train probably passed this stop.\n", tripid.c_str());
-			printTripTimeData(*i.second);
-			LOG_RAW_DEBUG("\n");
+			auto tracked_trip = this->tracked_trips2[tripid];
+			for (auto confirmed_stop : tracked_trip.confirmed_stops) {
+				if (confirmed_stop.first == i.first) {
+					// train is confirmed to have skipped this stop.
+					LOG_TRIPSTATUS_DEBUG("NYCTFeedTracker: Confirmed skipped stop '%s'.\n", i.first.c_str());
+					return;
+				}
+			}
+			
+			{
+				LOG_TRIPSTATUS_WARN("NYCTFeedTracker: LOSTTRIPTIME train probably passed this stop, but we did not record an arrival: '%s'\n", i.first.c_str());
+				printTripTimeData(*i.second);
+				LOG_RAW_DEBUG("\n");
+			}
 		}
 	}
 
@@ -269,11 +280,11 @@ namespace nyctlib {
 					if (found_trip) {
 						LOG_FT_DEBUG("Trip '%s' at stop '%s' as per schedule.\n",
 							trip->nyct_train_id.c_str(), vu->stop_id.c_str());
-						tracked.confirmed_stops.push_back(std::make_tuple(vu->stop_id, vu->timestamp));
+						tracked.confirmed_stops.push_back(std::make_pair(vu->stop_id, vu->timestamp));
 					} else {
 						LOG_FT_WARN(CH_YELLOW "Trip '%s' is stopping at stop '%s', was not on the original schedule.\n" CRESET,
 							trip->nyct_train_id.c_str(), vu->stop_id.c_str());
-						tracked.confirmed_stops.push_back(std::make_tuple(vu->stop_id, vu->timestamp));
+						tracked.confirmed_stops.push_back(std::make_pair(vu->stop_id, vu->timestamp));
 					}
 				}
 

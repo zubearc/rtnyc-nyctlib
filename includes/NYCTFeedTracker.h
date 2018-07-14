@@ -25,7 +25,7 @@ namespace nyctlib {
 
 			std::vector<NYCTTripTimeUpdate> initial_trip_schedule;
 
-			std::vector<std::tuple<std::string, long long>> confirmed_stops;
+			std::vector<std::pair<std::string, long long>> confirmed_stops;
 		};
 
 		std::map<std::string /* ATS ID */, TrackedTrip> tracked_trips2;
