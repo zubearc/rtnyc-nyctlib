@@ -24,8 +24,34 @@ namespace nyctlib {
 			NYCTTripUpdate old_tracked_trip;
 
 			std::vector<NYCTTripTimeUpdate> initial_trip_schedule;
+			std::vector<std::vector<NYCTTripTimeUpdate>> updated_trip_schedules;
 
 			std::vector<std::pair<std::string, long long>> confirmed_stops;
+
+			// These are unsafe operations and should *only* be used temporarily while this object is in scope
+
+			inline NYCTTripTimeUpdate* isStopScheduledInitially(std::string stop_id) {
+				for (auto stop : initial_trip_schedule) {
+					if (stop.stop_id == stop_id) {
+						return &stop;
+					}
+				}
+				return nullptr;
+			}
+
+			inline NYCTTripTimeUpdate* isStopScheduled(std::string stop_id) {
+				auto scheduled_initially = isStopScheduledInitially(stop_id);
+				if (scheduled_initially != nullptr)
+					return scheduled_initially;
+				for (auto schedule : updated_trip_schedules) {
+					for (auto stop : schedule) {
+						if (stop.stop_id == stop_id) {
+							return &stop;
+						}
+					}
+				}
+				return nullptr;
+			}
 		};
 
 		std::map<std::string /* ATS ID */, TrackedTrip> tracked_trips2;

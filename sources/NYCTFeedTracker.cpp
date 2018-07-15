@@ -269,24 +269,21 @@ namespace nyctlib {
 				auto old_stop_progress = tracked_trip.stop_progress;
 				auto current_stop_progress = vu->stop_progress;
 
-				if (current_stop_progress == GtfsVehicleProgress::AtStation) {
-					bool found_trip = false;
-					for (auto schedule_item : original_trip_schedule) {
-						if (schedule_item.stop_id == vu->stop_id) {
-							found_trip = true;
-						}
-					}
+				bool found_trip = false;
+				if (tracked.isStopScheduled(vu->stop_id)) {
+					found_trip = true;
+				}
 
+
+
+				/*if (current_stop_progress == GtfsVehicleProgress::AtStation) {
 					if (found_trip) {
 						LOG_FT_DEBUG("Trip '%s' at stop '%s' as per schedule.\n",
 							trip->nyct_train_id.c_str(), vu->stop_id.c_str());
 						tracked.confirmed_stops.push_back(std::make_pair(vu->stop_id, vu->timestamp));
 					} else {
-						LOG_FT_WARN(CH_YELLOW "Trip '%s' is stopping at stop '%s', was not on the original schedule.\n" CRESET,
-							trip->nyct_train_id.c_str(), vu->stop_id.c_str());
-						tracked.confirmed_stops.push_back(std::make_pair(vu->stop_id, vu->timestamp));
 					}
-				}
+				}*/
 
 				auto getStopProgressString = [](GtfsVehicleProgress progress) {
 					if (progress == GtfsVehicleProgress::ApproachingStation) {
@@ -301,8 +298,17 @@ namespace nyctlib {
 					return "unknown";
 				};
 
+				if (!found_trip) {
+					LOG_FT_WARN(CH_YELLOW "Trip '%s' is %s stop '%s', was not on the original schedule.\n" CRESET,
+						trip->nyct_train_id.c_str(), getStopProgressString(current_stop_progress), vu->stop_id.c_str());
+					tracked.confirmed_stops.push_back(std::make_pair(vu->stop_id, vu->timestamp));
+				}
+
 				if (tracked_trip.current_stop_index != vu->current_stop_index) {
-					LOG_FT_DEBUG("NYCTFeedTracker: Trip '%s' is now %s stop #%d, was previously %s stop #%d\n", trip->nyct_train_id.c_str(), getStopProgressString(current_stop_progress), vu->current_stop_index, getStopProgressString(old_stop_progress), tracked_trip.current_stop_index);
+					LOG_FT_DEBUG("NYCTFeedTracker: Trip '%s' is now %s stop #%d (%s), was previously %s stop #%d (%s)\n", 
+						trip->nyct_train_id.c_str(), getStopProgressString(current_stop_progress), vu->current_stop_index, 
+						vu->stop_id.c_str(), getStopProgressString(old_stop_progress), tracked_trip.current_stop_index,
+						tracked_trip.stop_id.c_str());
 				}
 
 				if (vu->current_stop_index == 1) {
