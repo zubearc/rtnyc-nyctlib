@@ -23,7 +23,7 @@ namespace nyctlib {
 
 		auto nyctTrip = trip.GetExtension(nyct_trip_descriptor);
 		out.nyct_train_id = nyctTrip.train_id();
-		out.nyct_direction = nyctTrip.direction();
+		out.nyct_direction = (int)nyctTrip.direction();
 		out.nyct_is_assigned = nyctTrip.is_assigned();
 
 		return true;
@@ -46,14 +46,14 @@ namespace nyctlib {
 	bool NYCTFeedParser::loadTripUpdate(const transit_realtime::TripUpdate &tripupdate, NYCTTripUpdate &out) {
 		GtfsFeedParser::parseTripUpdate(tripupdate, out);
 		
-		auto out_trip = std::make_unique<NYCTTrip>();
+		auto out_trip = std::make_shared<NYCTTrip>();
 		loadTrip(tripupdate.trip(), *out_trip.get());
 		out.trip = std::move(out_trip);
 
 		auto stoptimeupdates = tripupdate.stop_time_update();
 
 		for (auto stoptimeupdate : stoptimeupdates) {
-			auto u = std::make_unique<NYCTTripTimeUpdate>();
+			auto u = std::make_shared<NYCTTripTimeUpdate>();
 			parseStopTimeUpdate(stoptimeupdate, *u.get());
 			out.stop_time_updates.push_back(std::move(u));
 		}
@@ -69,7 +69,7 @@ namespace nyctlib {
 			return r;
 		}
 
-		auto out_trip = std::make_unique<NYCTTrip>();
+		auto out_trip = std::make_shared<NYCTTrip>();
 		this->loadTrip(vehicleposition.trip(), *out_trip.get());
 		out.trip = std::move(out_trip);
 		return true;
@@ -79,7 +79,7 @@ namespace nyctlib {
 		std::string entity_id = entity.id();
 
 		if (entity.has_trip_update()) {
-			auto trip_update = std::make_unique<NYCTTripUpdate>();
+			auto trip_update = std::make_shared<NYCTTripUpdate>();
 			if (!this->loadTripUpdate(entity.trip_update(), *trip_update.get())) {
 				fprintf(stderr, "FAILED TO PARSE TRIP UPDATE for entity '%s'\n", entity_id.c_str());
 				return false;
@@ -88,7 +88,7 @@ namespace nyctlib {
 		}
 
 		if (entity.has_vehicle()) {
-			auto vech_update = std::make_unique<NYCTVehicleUpdate>();
+			auto vech_update = std::make_shared<NYCTVehicleUpdate>();
 			if (!this->loadVehicleUpdate(entity.vehicle(), *vech_update.get())) {
 				fprintf(stderr, "FAILED TO PARSE VEHICLE UPDATE for entity '%s'\n", entity_id.c_str());
 				return false;
@@ -112,15 +112,16 @@ namespace nyctlib {
 			if (v->stop_progress == GtfsVehicleProgress::AtStation)
 				PRINTDBG("at station -- ");
 
-			PRINTDBG("ATS ID '%s' isAssigned: %d Direction: %s\n", trip->nyct_train_id.c_str(), trip->nyct_is_assigned, trip->nyct_direction.c_str());
+			PRINTDBG("ATS ID '%s' isAssigned: %d Direction: %d\n", trip->nyct_train_id.c_str(), trip->nyct_is_assigned, trip->nyct_direction);
 		});
 
-		forEachTripUpdate([](NYCTTripUpdate *t) {
+		forEachTripUpdate([](const NYCTTripUpdate &tu) {
+			auto t = &tu;
 			auto trip_wrapped = t->trip;
 			NYCTTrip *trip = (NYCTTrip*)trip_wrapped.get();
 			PRINTDBG("Trip route '%s', trip id '%s', at %s -- ", trip->route_id.c_str(), trip->trip_id.c_str(), trip->start_date.c_str());
 			
-			PRINTDBG("ATS ID '%s' isAssigned: %d Direction: %s\n", trip->nyct_train_id.c_str(), trip->nyct_is_assigned, trip->nyct_direction.c_str());
+			PRINTDBG("ATS ID '%s' isAssigned: %d Direction: %d\n", trip->nyct_train_id.c_str(), trip->nyct_is_assigned, trip->nyct_direction);
 		
 			for (auto s : t->stop_time_updates) {
 				NYCTTripTimeUpdate *u = (NYCTTripTimeUpdate*)s.get();

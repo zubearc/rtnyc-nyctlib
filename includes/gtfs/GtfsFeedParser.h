@@ -39,6 +39,7 @@ namespace nyctlib {
 		long long timestamp = NULL;
 		std::shared_ptr<GtfsTrip> trip;
 		std::vector<std::shared_ptr<GtfsTripTimeUpdate>> stop_time_updates;
+		virtual ~GtfsTripUpdate() = default;
 	};
 
 	class GtfsFeedParser {

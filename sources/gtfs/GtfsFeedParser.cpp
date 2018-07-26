@@ -5,6 +5,8 @@
 
 #include "TimeUtil.h"
 
+//#include "gtfs/ProtobufLogHandler.h"
+
 namespace nyctlib {
 
 	GtfsFeedParser::GtfsFeedParser() {
@@ -136,7 +138,7 @@ namespace nyctlib {
 		std::string entity_id = entity.id();
 
 		if (entity.has_trip_update()) {
-			auto trip_update = std::make_unique<GtfsTripUpdate>();
+			auto trip_update = std::make_shared<GtfsTripUpdate>();
 			if (!this->loadTripUpdate(entity.trip_update(), *trip_update.get())) {
 				fprintf(stderr, "FAILED TO PARSE TRIP UPDATE for entity '%s'\n", entity_id.c_str());
 				return false;
@@ -145,7 +147,7 @@ namespace nyctlib {
 		}
 
 		if (entity.has_vehicle()) {
-			auto vech_update = std::make_unique<GtfsVehicleUpdate>();
+			auto vech_update = std::make_shared<GtfsVehicleUpdate>();
 			if (!this->loadVehicleUpdate(entity.vehicle(), *vech_update.get())) {
 				fprintf(stderr, "FAILED TO PARSE VEHICLE UPDATE for entity '%s'\n", entity_id.c_str());
 				return false;
@@ -182,7 +184,16 @@ namespace nyctlib {
 	bool GtfsFeedParser::loadBuffer(const char *buffer, int length) noexcept {
 		transit_realtime::FeedMessage feedMessage;
 
+		printf("must read buffer of size %d\n", length);
+
 		if (!feedMessage.ParseFromArray(buffer, length)) {
+			std::vector<std::string> errors;
+			feedMessage.FindInitializationErrors(&errors);
+			std::cout << feedMessage.IsInitialized() << std::endl;
+			std::cout << feedMessage.SerializeAsString() << std::endl;
+			for (auto error : errors) {
+				std::cout << error << std::endl;
+			}
 			fprintf(stderr, "Failed to read protocol buffer\n");
 			return false;
 		}

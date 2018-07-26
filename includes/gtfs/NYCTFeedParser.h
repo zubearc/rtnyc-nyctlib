@@ -8,7 +8,7 @@ namespace nyctlib {
 	struct NYCTTrip : GtfsTrip {
 		std::string nyct_train_id;
 		bool nyct_is_assigned;
-		std::string nyct_direction;
+		int nyct_direction;
 	};
 
 	struct NYCTTripTimeUpdate : GtfsTripTimeUpdate {
@@ -29,7 +29,7 @@ namespace nyctlib {
 
 	struct NYCTTripUpdate : GtfsTripUpdate {
 		inline bool operator==(const NYCTTripUpdate& r) {
-			for (int i = 0; i < this->stop_time_updates.size(); i++) {
+			for (unsigned int i = 0; i < this->stop_time_updates.size(); i++) {
 				auto lT = (NYCTTripTimeUpdate*)this->stop_time_updates[i].get();
 				auto rT = (NYCTTripTimeUpdate*)r.stop_time_updates[i].get();
 				if (!(lT->actual_track == rT->actual_track &&
@@ -51,6 +51,8 @@ namespace nyctlib {
 				return false;
 			return true;
 		}
+
+		virtual ~NYCTTripUpdate() = default;
 	};
 	
 	class NYCTFeedParser : public GtfsFeedParser {
@@ -77,9 +79,9 @@ namespace nyctlib {
 		virtual bool loadTripUpdate(const transit_realtime::TripUpdate &tripupdate, NYCTTripUpdate &out);
 		virtual bool loadVehicleUpdate(const transit_realtime::VehiclePosition &vehicleposition, NYCTVehicleUpdate &out);
 
-		virtual void forEachTripUpdate(const std::function<void(NYCTTripUpdate*)> &&l) {
+		virtual void forEachTripUpdate(const std::function<void(const NYCTTripUpdate&)> &&l) {
 			for (auto &i : trip_updates) {
-				l(i.get());
+				l(*i.get());
 			}
 		}
 
@@ -90,5 +92,7 @@ namespace nyctlib {
 		}
 
 		virtual void dumpOut();
+
+		virtual ~NYCTFeedParser() = default;
 	};
 }

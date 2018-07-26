@@ -1,7 +1,7 @@
-#include "NYCTFeedTracker.h"
-
 #include <time.h>
 #include <sstream>
+#include "subway/NYCTFeedTracker.h"
+#include "Logging.h"
 
 #ifdef _WIN32
 #include <windows.h>
@@ -13,14 +13,12 @@
 #define SLEEP(x) usleep(x * 1000)
 #endif
 
-#include "Logging.h"
-
 namespace nyctlib {
 	void NYCTFeedTracker::clearTrackedDataForTrip(std::string tripid) {
 		this->tracked_trips2.erase(tripid);
 	}
 
-	void NYCTFeedTracker::processTripTimeUpdates(std::string tripid, std::vector<std::shared_ptr<GtfsTripTimeUpdate>>& old, std::vector<std::shared_ptr<GtfsTripTimeUpdate>>& current) {
+	void NYCTFeedTracker::processTripTimeUpdates(std::string tripid, std::vector<std::shared_ptr<GtfsTripTimeUpdate>>& old, std::vector<std::shared_ptr<GtfsTripTimeUpdate>>& current, const NYCTTripUpdate *tu) {
 
 #define LOG_TRIPSTATUS_WARN(arguments, ...) LOG_FT_WARN("NYCTFeedTracker: \33[1;37m'%s'\33[0m: " arguments, tripid.c_str(), ##__VA_ARGS__)
 #define LOG_TRIPSTATUS_DEBUG(arguments, ...) LOG_FT_DEBUG("NYCTFeedTracker: \33[1;37m'%s'\33[0m: " arguments, tripid.c_str(), ##__VA_ARGS__)
@@ -77,25 +75,26 @@ namespace nyctlib {
 				if ((lT->arrival_time != rT->arrival_time) && lT->arrival_time && rT->arrival_time) {
 					long long arrival_diff = rT->arrival_time - lT->arrival_time;
 					if (all_delta_arrival_time == INT_MAX) {
-						all_delta_arrival_time = arrival_diff;
+						all_delta_arrival_time = (int)arrival_diff;
 					} else if (all_delta_arrival_time != arrival_diff) {
 						all_delta_arrival_time = INT_MIN;
 						must_print_diffs = 0xC0fee;
 						LOG_TRIPSTATUS_WARN(CH_MAGENTA "Trip encountered schedule change starting from arrival for stop '%s'.\n" CRESET, i.first.c_str());
-						first_arrival_diff_if_schedule_change = arrival_diff;
+						//RAISE_EVENT()
+						first_arrival_diff_if_schedule_change = (int)arrival_diff;
 					}
 				}
 
 				if ((lT->depature_time != rT->depature_time) && lT->depature_time && rT->depature_time) {
 					long long depature_diff = rT->depature_time - lT->depature_time;
 					if (all_delta_depature_time == INT_MAX) {
-						all_delta_depature_time = depature_diff;
+						all_delta_depature_time = (int)depature_diff;
 					}
 					else if (all_delta_depature_time != depature_diff) {
 						all_delta_depature_time = INT_MIN;
 						must_print_diffs = 0xC0fee;
 						LOG_TRIPSTATUS_WARN(CH_MAGENTA "Trip encountered schedule change starting from depature for stop '%s'.\n" CRESET, i.first.c_str());
-						first_depature_diff_if_schedule_change = depature_diff;
+						first_depature_diff_if_schedule_change = (int)depature_diff;
 					}
 				}
 
@@ -115,6 +114,25 @@ namespace nyctlib {
 						LOG_TRIPSTATUS_WARN(CH_YELLOW "REROUTE Train is no longer expected to stop at stop '%s' at track '%s', will now stop at track '%s'\n" CRESET,
 							i.first.c_str(), lT->actual_track.c_str(), rT->actual_track.c_str());
 					}
+				}
+
+				if (all_delta_arrival_time == INT_MIN || all_delta_depature_time == INT_MIN) {
+					std::vector<NYCTTripTimeUpdate> newttus;
+					for (auto stu : tu->stop_time_updates) {
+						auto ttu = (NYCTTripTimeUpdate*)stu.get();
+						newttus.push_back(NYCTTripTimeUpdate(*ttu));
+					}
+					// don't think we *really* need to record every trip update
+					// since especially the IND feeds change all the damn time
+					// the first and latest updated should be fine.
+					getTrackedTrip(tripid).updated_trip_schedules = { newttus };
+
+					SubwayTripEvent event;
+					event.trip_id = tripid;
+					event.event_category = SubwayTripEvent::ScheduleChange;
+					event.initial_tracked_trip = &getTrackedTrip(tripid);
+					event.trip_update = NYCTTripUpdate(*tu);
+					this->queueEvent(event);
 				}
 
 				// am i not fucking clever for this trickery ?!
@@ -216,7 +234,7 @@ namespace nyctlib {
 			return -1;
 		}
 		
-		for (int i = 0; i < is.size(); i++) {
+		for (unsigned int i = 0; i < is.size(); i++) {
 			auto s = is[i];
 			if (s.stop_id == gtfs_stop_id) {
 				return i + 1; // trip id indexes always start at 1
@@ -276,14 +294,14 @@ namespace nyctlib {
 
 
 
-				/*if (current_stop_progress == GtfsVehicleProgress::AtStation) {
+				if (current_stop_progress == GtfsVehicleProgress::AtStation) {
 					if (found_trip) {
 						LOG_FT_DEBUG("Trip '%s' at stop '%s' as per schedule.\n",
 							trip->nyct_train_id.c_str(), vu->stop_id.c_str());
 						tracked.confirmed_stops.push_back(std::make_pair(vu->stop_id, vu->timestamp));
 					} else {
 					}
-				}*/
+				}
 
 				auto getStopProgressString = [](GtfsVehicleProgress progress) {
 					if (progress == GtfsVehicleProgress::ApproachingStation) {
@@ -299,16 +317,24 @@ namespace nyctlib {
 				};
 
 				if (!found_trip) {
-					LOG_FT_WARN(CH_YELLOW "Trip '%s' is %s stop '%s', was not on the original schedule.\n" CRESET,
-						trip->nyct_train_id.c_str(), getStopProgressString(current_stop_progress), vu->stop_id.c_str());
+					LOG_FT_WARN(CH_YELLOW "Trip '%s' is %s stop '%s' (#%d), was not on the original schedule.\n" CRESET,
+						trip->nyct_train_id.c_str(), getStopProgressString(current_stop_progress), vu->stop_id.c_str(), vu->current_stop_index);
 					tracked.confirmed_stops.push_back(std::make_pair(vu->stop_id, vu->timestamp));
 				}
 
-				if (tracked_trip.current_stop_index != vu->current_stop_index) {
+				if (tracked_trip.current_stop_index != vu->current_stop_index ||
+					current_stop_progress != old_stop_progress) {
 					LOG_FT_DEBUG("NYCTFeedTracker: Trip '%s' is now %s stop #%d (%s), was previously %s stop #%d (%s)\n", 
 						trip->nyct_train_id.c_str(), getStopProgressString(current_stop_progress), vu->current_stop_index, 
 						vu->stop_id.c_str(), getStopProgressString(old_stop_progress), tracked_trip.current_stop_index,
 						tracked_trip.stop_id.c_str());
+					
+					SubwayTripEvent event;
+					event.trip_id = trip->nyct_train_id;
+					event.initial_tracked_trip = &tracked;
+					event.event_category = SubwayTripEvent::StopChange;
+					event.vehicle_update = NYCTVehicleUpdate(*vu);
+					this->queueEvent(event);
 				}
 
 				if (vu->current_stop_index == 1) {
@@ -321,11 +347,11 @@ namespace nyctlib {
 
 		// Every vehicle feed above will also have a TripUpdate, however not every TU will have a VU (e.g. special non-revenue trips)
 		// TODO: IF the above is *not* true, we will leak memory -- look into this
-		currentFeed->forEachTripUpdate([&](NYCTTripUpdate *tu) {
-			NYCTTrip *trip = (NYCTTrip*)tu->trip.get();
+		currentFeed->forEachTripUpdate([&](const NYCTTripUpdate &tu) {
+			const NYCTTrip *trip = (NYCTTrip*)tu.trip.get();
 			std::string trainid = trip->nyct_train_id;
 
-			if (!trip->nyct_is_assigned && tu->stop_time_updates.size() == 0) {
+			if (!trip->nyct_is_assigned && tu.stop_time_updates.size() == 0) {
 				LOG_FT_INFO("NYCTTrainTracker: " CPURPLE "Not tracking an unassigned trip with no stop time updates with ID '%s'.\n" CRESET, trainid.c_str());
 				return;
 			}
@@ -345,7 +371,7 @@ namespace nyctlib {
 
 
 					if (tracked_trip.last_tracked_vehicle) {
-						LOG_RAW_INFO(" (at stop #%d/%d)", tracked_trip.last_tracked_vehicle.current_stop_index, tu->stop_time_updates.size());
+						LOG_RAW_INFO(" (at stop #%d/%d)", tracked_trip.last_tracked_vehicle.current_stop_index, tu.stop_time_updates.size());
 					}
 
 					if (trainid.at(0) != '0') {
@@ -370,28 +396,47 @@ namespace nyctlib {
 						LOG_RAW_INFO(" (UNASSIGNED)\n");
 					} else {
 						LOG_RAW_INFO("\n");
-						for (auto stu : tu->stop_time_updates) {
+						for (auto &stu : tu.stop_time_updates) {
 							auto s = (NYCTTripTimeUpdate*)stu.get();
 							tracked_trip.initial_trip_schedule.push_back(NYCTTripTimeUpdate(*s));
 						}
+						SubwayTripEvent event;
+						event.event_category = SubwayTripEvent::TripAssigned;
+						event.initial_tracked_trip = &tracked_trip;
+						event.trip_id = trainid;
+						event.trip_update = NYCTTripUpdate(tu);
+						this->queueEvent(event);
 					}
-					tracked_trip.last_tracked_trip = NYCTTripUpdate(*tu);
+					tracked_trip.last_tracked_trip = NYCTTripUpdate(tu);
 				} else {
 					tracked_trip.old_tracked_trip = tracked_trip.last_tracked_trip;
 
 					NYCTTrip *oldtrip = (NYCTTrip*)tracked_trip.last_tracked_trip.trip.get();
 
-					if (tracked_trip.initial_trip_schedule.size() == 0 && tu->stop_time_updates.size() > 0) {
+					if (tracked_trip.initial_trip_schedule.size() == 0 && tu.stop_time_updates.size() > 0) {
 						LOG_FT_DEBUG("NYCTTrainTracker: Now have initial trip data for trip ID '%s'\n", trainid.c_str());
-						for (auto stu : tu->stop_time_updates) {
+						for (auto stu : tu.stop_time_updates) {
 							auto s = (NYCTTripTimeUpdate*)stu.get();
 							tracked_trip.initial_trip_schedule.push_back(NYCTTripTimeUpdate(*s));
+
 						}
+						SubwayTripEvent event;
+						event.event_category = SubwayTripEvent::ScheduleChange;
+						event.initial_tracked_trip = &tracked_trip;
+						event.trip_id = trainid;
+						event.trip_update = NYCTTripUpdate(tu);
+						this->queueEvent(event);
 					}
 
 					if (!oldtrip->nyct_is_assigned && trip->nyct_is_assigned) {
 						LOG_FT_INFO("NYCTTrainTracker: " CGREEN "Formerly unassigned trip with ID '%s' is now assigned. " CRESET "(at stop #%d/#%d)\n",
-							trainid.c_str(), tracked_trip.last_tracked_vehicle.current_stop_index, tu->stop_time_updates.size());
+							trainid.c_str(), tracked_trip.last_tracked_vehicle.current_stop_index, tu.stop_time_updates.size());
+						SubwayTripEvent event;
+						event.event_category = SubwayTripEvent::TripAssigned;
+						event.initial_tracked_trip = &tracked_trip;
+						event.trip_id = trainid;
+						event.trip_update = NYCTTripUpdate(tu);
+						this->queueEvent(event);
 						if (tracked_trip.initial_trip_schedule.size() == 0) {
 							LOG_FT_WARN("NYCTrainTracker: " CYELLOW "Trip ID '%s' was assigned without any stop time updates\n" CRESET, trainid.c_str());
 						}
@@ -399,9 +444,10 @@ namespace nyctlib {
 						LOG_FT_WARN("NYCTTrainTracker: " CH_MAGENTA "Trip id '%s' is now unassigned?!\n" CRESET, trainid.c_str());
 					}
 
-					this->processTripTimeUpdates(trainid, tracked_trip.last_tracked_trip.stop_time_updates, tu->stop_time_updates);
+					this->processTripTimeUpdates(trainid, tracked_trip.last_tracked_trip.stop_time_updates, 
+						((NYCTTripUpdate*)&tu)->stop_time_updates, &tu);
 					unaccounted_trips.erase(trainid);
-					tracked_trip.last_tracked_trip = NYCTTripUpdate(*tu);
+					tracked_trip.last_tracked_trip = NYCTTripUpdate(tu);
 				}
 			}
 		});
@@ -446,6 +492,7 @@ namespace nyctlib {
 	}
 
 	void NYCTFeedTracker::run() {
+		int max_runs = 5;
 		while (this->active) {
 			bool ret = this->update();
 			if (!ret) {
@@ -453,6 +500,10 @@ namespace nyctlib {
 				this->update(); // try once more if we fail first time
 								// this may happen if the server goes breifly offline
 			}
+			flushEvents();
+			max_runs--;
+			if (max_runs == 0)
+				return;
 			
 			auto next_update = this->last_update_time + 24;
 			long long timenow = time(NULL);
@@ -463,8 +514,8 @@ namespace nyctlib {
 
 			// MTA updates their feeds every 15 seconds, we check back the data every 24 seconds
 			// which appears to be a good wait period to allow the server to update + serve data
-			printf("done, going back to sleep for %d seconds. zzz.\n", sleep_for_seconds);
-			SLEEP(sleep_for_seconds * 1000);
+			printf("done, going back to sleep for %lld seconds. zzz.\n", sleep_for_seconds);
+			SLEEP((int)sleep_for_seconds * 1000);
 		}
 	}
 
@@ -478,10 +529,10 @@ namespace nyctlib {
 			return trips;
 		}
 
-		currentFeed->forEachTripUpdate([&](NYCTTripUpdate *tu) {
-			for (auto timeUpdate : tu->stop_time_updates) {
+		currentFeed->forEachTripUpdate([&](const NYCTTripUpdate &tu) {
+			for (auto timeUpdate : tu.stop_time_updates) {
 				if (timeUpdate->stop_id == stop_id) {
-					trips.push_back(NYCTTripUpdate(*tu));
+					trips.push_back(NYCTTripUpdate(tu));
 				}
 			}
 		});

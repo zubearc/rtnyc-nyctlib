@@ -8,7 +8,7 @@
       "inheritEnvironments": [ "msvc_x86" ],
       "buildRoot": "${env.USERPROFILE}\\CMakeBuilds\\${workspaceHash}\\build\\${name}",
       "installRoot": "${env.USERPROFILE}\\CMakeBuilds\\${workspaceHash}\\install\\${name}",
-      "cmakeCommandArgs": "-DCMAKE_TOOLCHAIN_FILE=H:/Users/Extreme/Development/Platforms/Windows/vcpkg/scripts/buildsystems/vcpkg.cmake -Dprotobuf_INCLUDE_DIR=H:\\Users\\Extreme\\Development\\Platforms\\Windows\\vcpkg\\installed\\x86-windows\\include",
+      "cmakeCommandArgs": "-DCMAKE_TOOLCHAIN_FILE=H:/Users/Extreme/Development/Platforms/Windows/vcpkg/scripts/buildsystems/vcpkg.cmake -Dprotobuf_INCLUDE_DIR=H:\\Users\\Extreme\\Development\\Platforms\\Windows\\vcpkg\\installed\\x86-windows\\include -Duwebsockets_LIBRARIES=H:\\Users\\Extreme\\Development\\Platforms\\Windows\\vcpkg\\installed\\x86-windows\\lib\\uWS.lib  -Duv_LIBRARIES=H:\\Users\\Extreme\\Development\\Platforms\\Windows\\vcpkg\\installed\\x86-windows\\lib\\libuv.lib",
       "buildCommandArgs": "-v",
       "ctestCommandArgs": ""
     },
@@ -19,7 +19,7 @@
       "inheritEnvironments": [ "msvc_x86" ],
       "buildRoot": "${env.USERPROFILE}\\CMakeBuilds\\${workspaceHash}\\build\\${name}",
       "installRoot": "${env.USERPROFILE}\\CMakeBuilds\\${workspaceHash}\\install\\${name}",
-      "cmakeCommandArgs": "-DCMAKE_TOOLCHAIN_FILE=H:/Users/Extreme/Development/Platforms/Windows/vcpkg/scripts/buildsystems/vcpkg.cmake -Dprotobuf_INCLUDE_DIR=H:\\Users\\Extreme\\Development\\Platforms\\Windows\\vcpkg\\installed\\x86-windows\\include",
+      "cmakeCommandArgs": "-DCMAKE_TOOLCHAIN_FILE=H:/Users/Extreme/Development/Platforms/Windows/vcpkg/scripts/buildsystems/vcpkg.cmake -Dprotobuf_INCLUDE_DIR=H:\\\\Users\\\\Extreme\\\\Development\\\\Platforms\\\\Windows\\\\vcpkg\\\\installed\\\\x86-windows\\\\include -Duwebsockets_LIBRARIES=H:\\Users\\Extreme\\Development\\Platforms\\Windows\\vcpkg\\installed\\x86-windows\\lib\\uWS.lib  -Duv_LIBRARIES=H:\\Users\\Extreme\\Development\\Platforms\\Windows\\vcpkg\\installed\\x86-windows\\lib\\libuv.lib",
       "buildCommandArgs": "-v",
       "ctestCommandArgs": ""
     },
