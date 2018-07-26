@@ -8,7 +8,7 @@ namespace nyctlib {
 		std::shared_ptr<BlockingEventHolder<SubwayTripEvent>> event_holder) {
 		
 		ws_interface->setRecieveHandler([&](WSInterface::Client client, Json &data) {
-			printf("recieveHandler(): '%d': Got '%s'\n", (int)client, data.dump().c_str());
+			printf("recieveHandler(): '%d': Got '%s'\n", client, data.dump().c_str());
 		});
 
 		ws_interface->setCommandHandler("subway", [&](WSInterface::Client client, std::string command, std::string arguments) {

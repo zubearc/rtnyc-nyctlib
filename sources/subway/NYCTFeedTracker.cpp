@@ -11,6 +11,8 @@
 #include <unistd.h>
 // Sleep for a given number of milliseconds
 #define SLEEP(x) usleep(x * 1000)
+#define min(a,b) (((a)<(b))?(a):(b))
+#define max(a,b) (((a)>(b))?(a):(b))
 #endif
 
 namespace nyctlib {
@@ -492,7 +494,6 @@ namespace nyctlib {
 	}
 
 	void NYCTFeedTracker::run() {
-		int max_runs = 5;
 		while (this->active) {
 			bool ret = this->update();
 			if (!ret) {
@@ -501,9 +502,6 @@ namespace nyctlib {
 								// this may happen if the server goes breifly offline
 			}
 			flushEvents();
-			max_runs--;
-			if (max_runs == 0)
-				return;
 			
 			auto next_update = this->last_update_time + 24;
 			long long timenow = time(NULL);

@@ -57,7 +57,7 @@ int main(int argc, char *argv[])
 		auto feedService = std::unique_ptr<IFeedService>((IFeedService*)rfs);
 */		
 		auto event_holder = std::make_shared<BlockingEventHolder<SubwayTripEvent>>();
-		nyctlib::NYCTFeedTracker nyctFeedTracker(std::move(feedService)/*, event_holder*/);
+		nyctlib::NYCTFeedTracker nyctFeedTracker(std::move(feedService), event_holder);
 
 		//auto trips = nyctFeedTracker.getTripsScheduledToArriveAtStop("217S");
 		/*auto memleaktest = std::thread([&]() {
@@ -71,22 +71,23 @@ int main(int argc, char *argv[])
 		});
 
 		tracker_running.detach();
-		
 		WSInterface wsi;
 		auto subway_ws_interface = NYCTSubwayInterface(&wsi, &nyctFeedTracker, event_holder);
-		
-		/*auto ws_listening_thread = std::thread([&] {
+
+		auto ws_listening_thread = std::thread([&] {
 			wsi.start("", 7777);
 		});
 
 		auto event_handling_thread = std::thread([&] {
 			subway_ws_interface.run();
-		});*/
+		});
 
-		Sleep(6400);
+		std::this_thread::sleep_for(std::chrono::seconds(4000));
+
+		//Sleep(6400);
 		//nyctFeedTracker.printTripsScheduledToArriveAtStop("633S");
 
-		Sleep(60000000000);
+		//Sleep(60000000000);
 		//nyctlib::GtfsFeedParser ferryFeedParser;
 		//ferryFeedParser.loadFile("H:/Users/Extreme/Development/Projects/NYCT/DataArchives/gtfs_ferry_tripupdate.bin");
 //		nyctlib::GtfsFeedParser busFeedParser;

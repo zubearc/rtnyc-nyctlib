@@ -69,9 +69,11 @@ namespace nyctlib {
 			} else {
 				NYCTTripTimeUpdate *last_stop = e.initial_tracked_trip->getPreviousStopScheduled(vu->stop_id);
 				
-				if (last_stop != nullptr && !!last_stop) {
-					assert(last_stop->stop_id.size() > 0);
-					json["LastStopID"] = last_stop->stop_id;
+				if (last_stop != nullptr) {
+					if (last_stop->stop_id.size() > 0) {
+						assert(last_stop->stop_id.size() > 0);
+						json["LastStopID"] = last_stop->stop_id;
+					}
 				}
 				
 				json["NextScheduledStop"] = vu->stop_id;
