@@ -168,7 +168,8 @@ namespace nyctlib {
 
 		for (auto user : client_map) {
 			auto ws = (uWS::WebSocket<uWS::SERVER>*)user.first;
-			ws->sendPrepared(prepared);
+			if (!ws->isClosed())
+				ws->sendPrepared(prepared);
 		}
 	}
 

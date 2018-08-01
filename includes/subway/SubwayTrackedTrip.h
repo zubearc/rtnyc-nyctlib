@@ -60,16 +60,16 @@ namespace nyctlib {
 			int latest_update_i = (int)updated_trip_schedules.size() - 1;
 
 			if (latest_update_i >= 0) {
-				auto latest_trip_schedule = updated_trip_schedules[latest_update_i];
+				auto &latest_trip_schedule = updated_trip_schedules[latest_update_i];
 				for (int i = 0; i < latest_trip_schedule.size(); i++) {
 					auto &stop = latest_trip_schedule[i];
 					if (stop.stop_id == stop_id) {
 						if (indexOffset) {
 							auto newoff = (i + indexOffset);
-							if (newoff < updated_trip_schedules.size() && newoff >= 0) {
+							if (newoff < latest_trip_schedule.size() && newoff >= 0) {
 								return &latest_trip_schedule[i + indexOffset];
 							} else {
-								return nullptr;
+								return isStopScheduledInitially(stop_id, indexOffset);
 							}
 						}
 						return &stop;

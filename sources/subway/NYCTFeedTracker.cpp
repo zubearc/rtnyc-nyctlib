@@ -118,25 +118,6 @@ namespace nyctlib {
 					}
 				}
 
-				if (all_delta_arrival_time == INT_MIN || all_delta_depature_time == INT_MIN) {
-					std::vector<NYCTTripTimeUpdate> newttus;
-					for (auto stu : tu->stop_time_updates) {
-						auto ttu = (NYCTTripTimeUpdate*)stu.get();
-						newttus.push_back(NYCTTripTimeUpdate(*ttu));
-					}
-					// don't think we *really* need to record every trip update
-					// since especially the IND feeds change all the damn time
-					// the first and latest updated should be fine.
-					getTrackedTrip(tripid).updated_trip_schedules = { newttus };
-
-					SubwayTripEvent event;
-					event.trip_id = tripid;
-					event.event_category = SubwayTripEvent::ScheduleChange;
-					event.initial_tracked_trip = &getTrackedTrip(tripid);
-					event.trip_update = NYCTTripUpdate(*tu);
-					this->queueEvent(event);
-				}
-
 				// am i not fucking clever for this trickery ?!
 				if (must_print_diffs > 0) {
 					LOG_RAW_DEBUG("was: ");
@@ -148,6 +129,26 @@ namespace nyctlib {
 				}
 			}
 			old_map.erase(i.first);
+		}
+
+		if (all_delta_arrival_time > 0xFFFF || all_delta_arrival_time < -0xFFFF
+			|| all_delta_depature_time > 0xFFFF || all_delta_depature_time < -0xFFFF) {
+			std::vector<NYCTTripTimeUpdate> newttus;
+			for (auto stu : tu->stop_time_updates) {
+				auto ttu = (NYCTTripTimeUpdate*)stu.get();
+				newttus.push_back(NYCTTripTimeUpdate(*ttu));
+			}
+			// don't think we *really* need to record every trip update
+			// since especially the IND feeds change all the damn time
+			// the first and latest updated should be fine.
+			getTrackedTrip(tripid).updated_trip_schedules = { newttus };
+
+			SubwayTripEvent event;
+			event.trip_id = tripid;
+			event.event_category = SubwayTripEvent::ScheduleChange;
+			event.initial_tracked_trip = &getTrackedTrip(tripid);
+			event.trip_update = NYCTTripUpdate(*tu);
+			this->queueEvent(event);
 		}
 
 		bool should_print_first_tripupdate_diff = false;
