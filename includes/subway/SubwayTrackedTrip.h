@@ -5,6 +5,8 @@
 namespace nyctlib {
 
 	struct SubwayTrackedTrip {
+		long long last_update_time;
+
 		int cumulative_arrival_delay = 0;
 		int cumulative_depature_delay = 0;
 
@@ -41,15 +43,17 @@ namespace nyctlib {
 		}
 
 		inline NYCTTripTimeUpdate* isStopScheduled(std::string stop_id) {
-			auto scheduled_initially = isStopScheduledInitially(stop_id);
-			if (scheduled_initially != nullptr)
-				return scheduled_initially;
 			for (auto &schedule : updated_trip_schedules) {
 				for (auto &stop : schedule) {
 					if (stop.stop_id == stop_id) {
 						return &stop;
 					}
 				}
+			}
+			if (updated_trip_schedules.size() == 0) {
+				auto scheduled_initially = isStopScheduledInitially(stop_id);
+				if (scheduled_initially != nullptr)
+					return scheduled_initially;
 			}
 			return nullptr;
 		}

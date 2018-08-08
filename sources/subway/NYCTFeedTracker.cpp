@@ -2,6 +2,7 @@
 #include <sstream>
 #include "subway/NYCTFeedTracker.h"
 #include "Logging.h"
+#include "TimeUtil.h"
 
 #ifdef _WIN32
 #include <windows.h>
@@ -131,8 +132,7 @@ namespace nyctlib {
 			old_map.erase(i.first);
 		}
 
-		if (all_delta_arrival_time > 0xFFFF || all_delta_arrival_time < -0xFFFF
-			|| all_delta_depature_time > 0xFFFF || all_delta_depature_time < -0xFFFF) {
+		if (all_delta_arrival_time < INT_MAX || all_delta_depature_time < INT_MAX) {
 			std::vector<NYCTTripTimeUpdate> newttus;
 			for (auto stu : tu->stop_time_updates) {
 				auto ttu = (NYCTTripTimeUpdate*)stu.get();
@@ -281,27 +281,48 @@ namespace nyctlib {
 			}
 
 			if (this->tracked_trips2.find(tripid) == this->tracked_trips2.end()) {
+				// Below implicitly creates an a tracked_trip.
 				this->tracked_trips2[tripid].last_tracked_vehicle = NYCTVehicleUpdate(*vu);
+				this->tracked_trips2[tripid].last_update_time = currentFeed->getFeedTime();
 			} else {
 				auto &tracked = this->tracked_trips2[tripid];
+				tracked.last_update_time = currentFeed->getFeedTime();
 				auto &tracked_trip = tracked.last_tracked_vehicle;
 
 				auto original_trip_schedule = tracked.initial_trip_schedule;
 				auto old_stop_progress = tracked_trip.stop_progress;
 				auto current_stop_progress = vu->stop_progress;
 
-				bool found_trip = false;
-				if (tracked.isStopScheduled(vu->stop_id)) {
-					found_trip = true;
+				std::string stop_id;
+
+				if (vu->stop_id.size() == 0) {
+					// no stop_id set -- probably on B division feeds
+					// thank whatever person who made these feeds for not providing this data to us
+					// so we have to fucking make assumptions to make this work.
+					// *sigh*. hopefully this is not too expensive of an operation.
+					currentFeed->forEachTripUpdate([&](const NYCTTripUpdate &tu) {
+						const NYCTTrip *trip = (NYCTTrip*)tu.trip.get();
+						std::string trainid = trip->nyct_train_id;
+						if (tripid == trainid) {
+							if (tu.stop_time_updates.size() > 0) {
+								stop_id = tu.stop_time_updates[0]->stop_id;
+								LOG_FT_DEBUG("Assumed VU stop_id from latest TU stop time update for trip '%s': %s\n", tripid.c_str(), stop_id.c_str());
+								return;
+							}
+						}
+					});
+				} else {
+					stop_id = vu->stop_id;
 				}
 
-
+				auto found_trip = tracked.isStopScheduled(stop_id);
+				
 
 				if (current_stop_progress == GtfsVehicleProgress::AtStation) {
 					if (found_trip) {
 						LOG_FT_DEBUG("Trip '%s' at stop '%s' as per schedule.\n",
-							trip->nyct_train_id.c_str(), vu->stop_id.c_str());
-						tracked.confirmed_stops.push_back(std::make_pair(vu->stop_id, vu->timestamp));
+							trip->nyct_train_id.c_str(), stop_id.c_str());
+						tracked.confirmed_stops.push_back(std::make_pair(stop_id, vu->timestamp));
 					} else {
 					}
 				}
@@ -322,7 +343,7 @@ namespace nyctlib {
 				if (!found_trip) {
 					LOG_FT_WARN(CH_YELLOW "Trip '%s' is %s stop '%s' (#%d), was not on the original schedule.\n" CRESET,
 						trip->nyct_train_id.c_str(), getStopProgressString(current_stop_progress), vu->stop_id.c_str(), vu->current_stop_index);
-					tracked.confirmed_stops.push_back(std::make_pair(vu->stop_id, vu->timestamp));
+					tracked.confirmed_stops.push_back(std::make_pair(stop_id, vu->timestamp));
 				}
 
 				if (tracked_trip.current_stop_index != vu->current_stop_index ||
@@ -337,6 +358,7 @@ namespace nyctlib {
 					event.initial_tracked_trip = &tracked;
 					event.event_category = SubwayTripEvent::StopChange;
 					event.vehicle_update = NYCTVehicleUpdate(*vu);
+					event.vehicle_update.stop_id = stop_id;
 					this->queueEvent(event);
 				}
 
@@ -472,6 +494,10 @@ namespace nyctlib {
 				auto scheduled_stop_count = tracked.initial_trip_schedule.size();
 				auto last_accounted_stop_id = tracked_vech.stop_id;
 				auto its = tracked.initial_trip_schedule;
+				if (its.size() == 0) {
+					LOG_FT_DEBUG("NYCTTrainTracker: Lost track of trip '%s' with no initial trip schedule\n", tripid.c_str());
+					continue;
+				}
 				auto scheduled_terminal_stop_id = its[(int)its.size() - 1].stop_id;
 
 				if (last_accounted_stop_id == scheduled_terminal_stop_id) {

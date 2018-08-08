@@ -5,6 +5,9 @@
 #include "interfaces/WSInterface.h"
 #include "Globals.h"
 
+// TODO: Remove this later on, currently used for debugging a uWS bug
+#define LOG_DEBUG printf
+
 using namespace json11;
 
 namespace nyctlib {
@@ -98,6 +101,7 @@ namespace nyctlib {
 					Json::object json;
 					createResponseHead(json, MessageType::Error);
 					json["message"] = "Invalid command service specified.";
+					json["ts"] = (int)time(NULL);
 					Json j(json);
 					ws->send(j.dump().c_str());
 					return;
@@ -140,6 +144,7 @@ namespace nyctlib {
 			{"c", command},
 			{"data", data}
 		};
+		json["ts"] = (int)time(NULL);
 		auto wsclient = (uWS::WebSocket<uWS::SERVER>*)client;
 		Json j(json);
 		wsclient->send(j.dump().c_str());
@@ -161,15 +166,25 @@ namespace nyctlib {
 		}
 		
 		json["updates"] = bupdates;
-		
+		json["ts"] = (int)time(NULL);
+
 		Json j(json);
 		std::string message = j.dump();
 		auto prepared = uWS::WebSocket<uWS::SERVER>::prepareMessage((char*)message.c_str(), message.length(), uWS::TEXT, false);
 
+		LOG_DEBUG("WSI: Broadcasting to %d clients\n", client_map.size());
 		for (auto user : client_map) {
 			auto ws = (uWS::WebSocket<uWS::SERVER>*)user.first;
-			if (!ws->isClosed())
+			LOG_DEBUG("WSI: Broadcasting on %d (shuttingdown=%d, remBytes=%d)\n", 
+				ws->getFd(), ws->isShuttingDown(), ws->remainingBytes);
+#ifdef _WIN32
+			// Fixes bug with sending multiple messages one after the other
+			// That would result in program faults
+			Sleep(100);
+#endif
+			if (!ws->isClosed()) {
 				ws->sendPrepared(prepared);
+			}	
 		}
 	}
 
@@ -187,6 +202,7 @@ namespace nyctlib {
 		Json::object json;
 		createResponseHead(json, MessageType::Status);
 		json["message"] = error_message;
+		json["ts"] = (int)time(NULL);
 		Json j(json);
 		auto wsclient = (uWS::WebSocket<uWS::SERVER>*)client;
 		wsclient->send(j.dump().c_str());
