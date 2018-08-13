@@ -21,14 +21,16 @@ namespace nyctlib {
 		std::shared_ptr<BlockingEventHolder<SubwayTripEvent>> holder;
 
 		WSInterface *wsInterface;
-		NYCTFeedTracker *tracker;
+		std::vector<NYCTFeedTracker*> trackers;
 	public:
 		volatile bool running;
 
-		NYCTSubwayInterface(WSInterface *ws_interface, NYCTFeedTracker *tracker, 
+		NYCTSubwayInterface(WSInterface *ws_interface, std::vector<NYCTFeedTracker*> trackers,
 			std::shared_ptr<BlockingEventHolder<SubwayTripEvent>> event_holder);
 
 		void processRequest(WSInterface::Client client, std::string request, std::string paramaters);
+
+		void processFlatRequest(WSInterface::Client client, char *message, int message_len);
 
 		void respond(WSInterface::Client client, std::string data) {
 			if (client != nullptr) {
@@ -40,6 +42,10 @@ namespace nyctlib {
 
 		json11::Json jBuildTripScheduleUpdate(SubwayTripEvent &e);
 
+		void fBuildStopMessageUpdate(SubwayTripEvent &e, unsigned char* &message, int &message_len);
+
+		void fBuildTripScheduleUpdate(SubwayTripEvent &e, unsigned char* &message, int &message_len);
+
 		void run();
 
 		void pGeneralFeedSubscribeRequest(WSInterface::Client client) {
@@ -47,5 +53,7 @@ namespace nyctlib {
 		}
 
 		void pLatestTripUpdateRequest(WSInterface::Client client, std::string trip_id);
+
+		void pCurrentTripsRequest(WSInterface::Client client);
 	};
 }

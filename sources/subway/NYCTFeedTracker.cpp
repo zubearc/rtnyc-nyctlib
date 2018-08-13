@@ -211,8 +211,9 @@ namespace nyctlib {
 			LOG_RAW_DEBUG("\n");
 		}
 
-		for (auto i : old_map) {
-			auto tracked_trip = this->tracked_trips2[tripid];
+		auto tracked_trip = this->tracked_trips2[tripid];
+
+		for (auto i : old_map) {	
 			for (auto confirmed_stop : tracked_trip.confirmed_stops) {
 				if (confirmed_stop.first == i.first) {
 					// train is confirmed to have skipped this stop.

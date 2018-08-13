@@ -86,6 +86,11 @@ namespace nyctlib {
 			throw std::invalid_argument("no such trip id is currently tracked");
 		}
 
+		// Unsafe operation, so please use with caution.
+		std::map<std::string /* ATS ID */, SubwayTrackedTrip>& getTrackedTripsRef() {
+			return this->tracked_trips2;
+		}
+
 		std::vector<NYCTTripUpdate> getTripsScheduledToArriveAtStop(std::string station_id);
 
 		void printTripsScheduledToArriveAtStop(std::string station_id);

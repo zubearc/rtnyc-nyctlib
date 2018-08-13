@@ -33,6 +33,7 @@ else()
 	find_package(CURL REQUIRED)
 	find_package(ZLIB REQUIRED)
 	find_package(OpenSSL REQUIRED)
+	find_package(flatbuffers REQUIRED)
 
 	message("CURL install dir is ${CURL_INCLUDE_DIR}")
 
@@ -75,6 +76,7 @@ find_package(protobuf CONFIG REQUIRED)
 target_link_libraries(NYCTLib PRIVATE protobuf::libprotobuf)
 include_directories(${protobuf_INCLUDE_DIR})
 include_directories(${uwebsockets_INCLUDE_DIR})
+include_directories(${flatbuffers_INCLUDE_DIR})
 
 # below is debug code to print all CMake variables
 #get_cmake_property(_variableNames VARIABLES)
