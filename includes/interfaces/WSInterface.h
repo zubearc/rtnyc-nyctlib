@@ -25,7 +25,7 @@ namespace nyctlib {
 			RequestedFeedFormat requested_format;
 		};
 
-		enum MessageType : int {
+		enum MessageType : unsigned short {
 			Status = 0,
 			Request = 1,
 			Response = 2,
@@ -43,7 +43,14 @@ namespace nyctlib {
 			NYCSubway_TripAssigned,
 			NYCSubway_ScheduleChange,
 
-			NYCSubway_CurrentTripsResponse = 0x1011
+			NYCSubway_CurrentTripsResponse = 0x1011,
+
+			NYCBus_StopChange = 0x201,
+			NYCBus_TripAssigned,
+			NYCBus_ScheduleChange,
+			NYCBus_PositionChange,
+
+			NYCBus_CurrentTripsResponse = 0x2011
 		};
 
 		// Below are used to make sure we don't serialize data
@@ -104,10 +111,10 @@ namespace nyctlib {
 		void broadcastJsonPreferred(std::string service, 
 			std::vector<std::pair<std::string /* command */, json11::Json /* data */>> &updates);
 
-		void broadcastBinaryPreferred(int message_type, char *message, int message_len);
+		void broadcastBinaryPreferred(MessageType reason, int message_type, char *message, int message_len);
 	
 		struct BinaryMessageWrapper { int message_type; unsigned char *message; int message_len; };
-		void broadcastBinaryPreferredBatch(std::vector<BinaryMessageWrapper> messages);
+		void broadcastBinaryPreferredBatch(MessageType reason, std::vector<BinaryMessageWrapper> messages);
 
 		void respondError(Client client, std::string error_message);
 

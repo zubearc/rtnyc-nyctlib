@@ -5,7 +5,7 @@
 #include "IFeedService.h"
 
 namespace nyctlib {
-	class NYCTFeedService : public IFeedService {
+	class NYCTFeedService : public IFeedService<NYCTFeedParser> {
 #ifdef  _EMSCRIPTEN
 		std::string buffer;
 		std::shared_ptr<NYCTFeedParser> feed_parser;

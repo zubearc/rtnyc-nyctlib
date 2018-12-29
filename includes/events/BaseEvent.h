@@ -3,7 +3,8 @@
 namespace nyctlib {
 
 	enum class EventType {
-		SubwayTripEvent
+		SubwayTripEvent,
+		BusTripEvent
 	};
 
 	struct BaseEvent {

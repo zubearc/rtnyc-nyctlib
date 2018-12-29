@@ -9,15 +9,31 @@
 namespace nyc {
 namespace realtime {
 
+struct ClientCommandProxyRequest;
+
+struct ClientCommandProxyResponse;
+
+struct Position;
+
 struct NYCSubwayTrip;
 
 struct NYCSubwaySchedule;
+
+struct NYCBusTrip;
+
+struct NYCBusSchedule;
 
 struct NYCSubwayStopUpdate;
 
 struct NYCSubwayScheduleUpdate;
 
 struct NYCSubwayTrips;
+
+struct NYCBusStopUpdate;
+
+struct NYCBusScheduleUpdate;
+
+struct NYCBusTrips;
 
 enum TripStatus {
   TripStatus_AtStation = 0,
@@ -84,6 +100,212 @@ inline const char * const *EnumNamesDirection() {
 inline const char *EnumNameDirection(Direction e) {
   const size_t index = static_cast<int>(e);
   return EnumNamesDirection()[index];
+}
+
+struct ClientCommandProxyRequest FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
+  enum {
+    VT_USER_ADDRESS = 4,
+    VT_REQUEST_ID = 6,
+    VT_PAYLOAD = 8
+  };
+  int32_t user_address() const {
+    return GetField<int32_t>(VT_USER_ADDRESS, 0);
+  }
+  int32_t request_id() const {
+    return GetField<int32_t>(VT_REQUEST_ID, 0);
+  }
+  const flatbuffers::String *payload() const {
+    return GetPointer<const flatbuffers::String *>(VT_PAYLOAD);
+  }
+  bool Verify(flatbuffers::Verifier &verifier) const {
+    return VerifyTableStart(verifier) &&
+           VerifyField<int32_t>(verifier, VT_USER_ADDRESS) &&
+           VerifyField<int32_t>(verifier, VT_REQUEST_ID) &&
+           VerifyOffset(verifier, VT_PAYLOAD) &&
+           verifier.Verify(payload()) &&
+           verifier.EndTable();
+  }
+};
+
+struct ClientCommandProxyRequestBuilder {
+  flatbuffers::FlatBufferBuilder &fbb_;
+  flatbuffers::uoffset_t start_;
+  void add_user_address(int32_t user_address) {
+    fbb_.AddElement<int32_t>(ClientCommandProxyRequest::VT_USER_ADDRESS, user_address, 0);
+  }
+  void add_request_id(int32_t request_id) {
+    fbb_.AddElement<int32_t>(ClientCommandProxyRequest::VT_REQUEST_ID, request_id, 0);
+  }
+  void add_payload(flatbuffers::Offset<flatbuffers::String> payload) {
+    fbb_.AddOffset(ClientCommandProxyRequest::VT_PAYLOAD, payload);
+  }
+  explicit ClientCommandProxyRequestBuilder(flatbuffers::FlatBufferBuilder &_fbb)
+        : fbb_(_fbb) {
+    start_ = fbb_.StartTable();
+  }
+  ClientCommandProxyRequestBuilder &operator=(const ClientCommandProxyRequestBuilder &);
+  flatbuffers::Offset<ClientCommandProxyRequest> Finish() {
+    const auto end = fbb_.EndTable(start_);
+    auto o = flatbuffers::Offset<ClientCommandProxyRequest>(end);
+    return o;
+  }
+};
+
+inline flatbuffers::Offset<ClientCommandProxyRequest> CreateClientCommandProxyRequest(
+    flatbuffers::FlatBufferBuilder &_fbb,
+    int32_t user_address = 0,
+    int32_t request_id = 0,
+    flatbuffers::Offset<flatbuffers::String> payload = 0) {
+  ClientCommandProxyRequestBuilder builder_(_fbb);
+  builder_.add_payload(payload);
+  builder_.add_request_id(request_id);
+  builder_.add_user_address(user_address);
+  return builder_.Finish();
+}
+
+inline flatbuffers::Offset<ClientCommandProxyRequest> CreateClientCommandProxyRequestDirect(
+    flatbuffers::FlatBufferBuilder &_fbb,
+    int32_t user_address = 0,
+    int32_t request_id = 0,
+    const char *payload = nullptr) {
+  return nyc::realtime::CreateClientCommandProxyRequest(
+      _fbb,
+      user_address,
+      request_id,
+      payload ? _fbb.CreateString(payload) : 0);
+}
+
+struct ClientCommandProxyResponse FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
+  enum {
+    VT_REQUEST_ID = 4,
+    VT_FORMAT = 6,
+    VT_PAYLOAD = 8
+  };
+  int32_t request_id() const {
+    return GetField<int32_t>(VT_REQUEST_ID, 0);
+  }
+  int8_t format() const {
+    return GetField<int8_t>(VT_FORMAT, 0);
+  }
+  const flatbuffers::String *payload() const {
+    return GetPointer<const flatbuffers::String *>(VT_PAYLOAD);
+  }
+  bool Verify(flatbuffers::Verifier &verifier) const {
+    return VerifyTableStart(verifier) &&
+           VerifyField<int32_t>(verifier, VT_REQUEST_ID) &&
+           VerifyField<int8_t>(verifier, VT_FORMAT) &&
+           VerifyOffset(verifier, VT_PAYLOAD) &&
+           verifier.Verify(payload()) &&
+           verifier.EndTable();
+  }
+};
+
+struct ClientCommandProxyResponseBuilder {
+  flatbuffers::FlatBufferBuilder &fbb_;
+  flatbuffers::uoffset_t start_;
+  void add_request_id(int32_t request_id) {
+    fbb_.AddElement<int32_t>(ClientCommandProxyResponse::VT_REQUEST_ID, request_id, 0);
+  }
+  void add_format(int8_t format) {
+    fbb_.AddElement<int8_t>(ClientCommandProxyResponse::VT_FORMAT, format, 0);
+  }
+  void add_payload(flatbuffers::Offset<flatbuffers::String> payload) {
+    fbb_.AddOffset(ClientCommandProxyResponse::VT_PAYLOAD, payload);
+  }
+  explicit ClientCommandProxyResponseBuilder(flatbuffers::FlatBufferBuilder &_fbb)
+        : fbb_(_fbb) {
+    start_ = fbb_.StartTable();
+  }
+  ClientCommandProxyResponseBuilder &operator=(const ClientCommandProxyResponseBuilder &);
+  flatbuffers::Offset<ClientCommandProxyResponse> Finish() {
+    const auto end = fbb_.EndTable(start_);
+    auto o = flatbuffers::Offset<ClientCommandProxyResponse>(end);
+    return o;
+  }
+};
+
+inline flatbuffers::Offset<ClientCommandProxyResponse> CreateClientCommandProxyResponse(
+    flatbuffers::FlatBufferBuilder &_fbb,
+    int32_t request_id = 0,
+    int8_t format = 0,
+    flatbuffers::Offset<flatbuffers::String> payload = 0) {
+  ClientCommandProxyResponseBuilder builder_(_fbb);
+  builder_.add_payload(payload);
+  builder_.add_request_id(request_id);
+  builder_.add_format(format);
+  return builder_.Finish();
+}
+
+inline flatbuffers::Offset<ClientCommandProxyResponse> CreateClientCommandProxyResponseDirect(
+    flatbuffers::FlatBufferBuilder &_fbb,
+    int32_t request_id = 0,
+    int8_t format = 0,
+    const char *payload = nullptr) {
+  return nyc::realtime::CreateClientCommandProxyResponse(
+      _fbb,
+      request_id,
+      format,
+      payload ? _fbb.CreateString(payload) : 0);
+}
+
+struct Position FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
+  enum {
+    VT_LATITUDE = 4,
+    VT_LONGITUDE = 6,
+    VT_BEARING = 8
+  };
+  float latitude() const {
+    return GetField<float>(VT_LATITUDE, 0.0f);
+  }
+  float longitude() const {
+    return GetField<float>(VT_LONGITUDE, 0.0f);
+  }
+  float bearing() const {
+    return GetField<float>(VT_BEARING, 0.0f);
+  }
+  bool Verify(flatbuffers::Verifier &verifier) const {
+    return VerifyTableStart(verifier) &&
+           VerifyField<float>(verifier, VT_LATITUDE) &&
+           VerifyField<float>(verifier, VT_LONGITUDE) &&
+           VerifyField<float>(verifier, VT_BEARING) &&
+           verifier.EndTable();
+  }
+};
+
+struct PositionBuilder {
+  flatbuffers::FlatBufferBuilder &fbb_;
+  flatbuffers::uoffset_t start_;
+  void add_latitude(float latitude) {
+    fbb_.AddElement<float>(Position::VT_LATITUDE, latitude, 0.0f);
+  }
+  void add_longitude(float longitude) {
+    fbb_.AddElement<float>(Position::VT_LONGITUDE, longitude, 0.0f);
+  }
+  void add_bearing(float bearing) {
+    fbb_.AddElement<float>(Position::VT_BEARING, bearing, 0.0f);
+  }
+  explicit PositionBuilder(flatbuffers::FlatBufferBuilder &_fbb)
+        : fbb_(_fbb) {
+    start_ = fbb_.StartTable();
+  }
+  PositionBuilder &operator=(const PositionBuilder &);
+  flatbuffers::Offset<Position> Finish() {
+    const auto end = fbb_.EndTable(start_);
+    auto o = flatbuffers::Offset<Position>(end);
+    return o;
+  }
+};
+
+inline flatbuffers::Offset<Position> CreatePosition(
+    flatbuffers::FlatBufferBuilder &_fbb,
+    float latitude = 0.0f,
+    float longitude = 0.0f,
+    float bearing = 0.0f) {
+  PositionBuilder builder_(_fbb);
+  builder_.add_bearing(bearing);
+  builder_.add_longitude(longitude);
+  builder_.add_latitude(latitude);
+  return builder_.Finish();
 }
 
 struct NYCSubwayTrip FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
@@ -291,6 +513,167 @@ inline flatbuffers::Offset<NYCSubwaySchedule> CreateNYCSubwayScheduleDirect(
       _fbb,
       scheduled_track ? _fbb.CreateString(scheduled_track) : 0,
       actual_track ? _fbb.CreateString(actual_track) : 0,
+      arrival_time,
+      departure_time,
+      stop_id ? _fbb.CreateString(stop_id) : 0);
+}
+
+struct NYCBusTrip FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
+  enum {
+    VT_GTFS_TRIP_ID = 4,
+    VT_ROUTE_ID = 6,
+    VT_START_DATE = 8,
+    VT_VEHICLE_ID = 10
+  };
+  const flatbuffers::String *gtfs_trip_id() const {
+    return GetPointer<const flatbuffers::String *>(VT_GTFS_TRIP_ID);
+  }
+  const flatbuffers::String *route_id() const {
+    return GetPointer<const flatbuffers::String *>(VT_ROUTE_ID);
+  }
+  const flatbuffers::String *start_date() const {
+    return GetPointer<const flatbuffers::String *>(VT_START_DATE);
+  }
+  const flatbuffers::String *vehicle_id() const {
+    return GetPointer<const flatbuffers::String *>(VT_VEHICLE_ID);
+  }
+  bool Verify(flatbuffers::Verifier &verifier) const {
+    return VerifyTableStart(verifier) &&
+           VerifyOffset(verifier, VT_GTFS_TRIP_ID) &&
+           verifier.Verify(gtfs_trip_id()) &&
+           VerifyOffset(verifier, VT_ROUTE_ID) &&
+           verifier.Verify(route_id()) &&
+           VerifyOffset(verifier, VT_START_DATE) &&
+           verifier.Verify(start_date()) &&
+           VerifyOffset(verifier, VT_VEHICLE_ID) &&
+           verifier.Verify(vehicle_id()) &&
+           verifier.EndTable();
+  }
+};
+
+struct NYCBusTripBuilder {
+  flatbuffers::FlatBufferBuilder &fbb_;
+  flatbuffers::uoffset_t start_;
+  void add_gtfs_trip_id(flatbuffers::Offset<flatbuffers::String> gtfs_trip_id) {
+    fbb_.AddOffset(NYCBusTrip::VT_GTFS_TRIP_ID, gtfs_trip_id);
+  }
+  void add_route_id(flatbuffers::Offset<flatbuffers::String> route_id) {
+    fbb_.AddOffset(NYCBusTrip::VT_ROUTE_ID, route_id);
+  }
+  void add_start_date(flatbuffers::Offset<flatbuffers::String> start_date) {
+    fbb_.AddOffset(NYCBusTrip::VT_START_DATE, start_date);
+  }
+  void add_vehicle_id(flatbuffers::Offset<flatbuffers::String> vehicle_id) {
+    fbb_.AddOffset(NYCBusTrip::VT_VEHICLE_ID, vehicle_id);
+  }
+  explicit NYCBusTripBuilder(flatbuffers::FlatBufferBuilder &_fbb)
+        : fbb_(_fbb) {
+    start_ = fbb_.StartTable();
+  }
+  NYCBusTripBuilder &operator=(const NYCBusTripBuilder &);
+  flatbuffers::Offset<NYCBusTrip> Finish() {
+    const auto end = fbb_.EndTable(start_);
+    auto o = flatbuffers::Offset<NYCBusTrip>(end);
+    return o;
+  }
+};
+
+inline flatbuffers::Offset<NYCBusTrip> CreateNYCBusTrip(
+    flatbuffers::FlatBufferBuilder &_fbb,
+    flatbuffers::Offset<flatbuffers::String> gtfs_trip_id = 0,
+    flatbuffers::Offset<flatbuffers::String> route_id = 0,
+    flatbuffers::Offset<flatbuffers::String> start_date = 0,
+    flatbuffers::Offset<flatbuffers::String> vehicle_id = 0) {
+  NYCBusTripBuilder builder_(_fbb);
+  builder_.add_vehicle_id(vehicle_id);
+  builder_.add_start_date(start_date);
+  builder_.add_route_id(route_id);
+  builder_.add_gtfs_trip_id(gtfs_trip_id);
+  return builder_.Finish();
+}
+
+inline flatbuffers::Offset<NYCBusTrip> CreateNYCBusTripDirect(
+    flatbuffers::FlatBufferBuilder &_fbb,
+    const char *gtfs_trip_id = nullptr,
+    const char *route_id = nullptr,
+    const char *start_date = nullptr,
+    const char *vehicle_id = nullptr) {
+  return nyc::realtime::CreateNYCBusTrip(
+      _fbb,
+      gtfs_trip_id ? _fbb.CreateString(gtfs_trip_id) : 0,
+      route_id ? _fbb.CreateString(route_id) : 0,
+      start_date ? _fbb.CreateString(start_date) : 0,
+      vehicle_id ? _fbb.CreateString(vehicle_id) : 0);
+}
+
+struct NYCBusSchedule FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
+  enum {
+    VT_ARRIVAL_TIME = 4,
+    VT_DEPARTURE_TIME = 6,
+    VT_STOP_ID = 8
+  };
+  int32_t arrival_time() const {
+    return GetField<int32_t>(VT_ARRIVAL_TIME, 0);
+  }
+  int32_t departure_time() const {
+    return GetField<int32_t>(VT_DEPARTURE_TIME, 0);
+  }
+  const flatbuffers::String *stop_id() const {
+    return GetPointer<const flatbuffers::String *>(VT_STOP_ID);
+  }
+  bool Verify(flatbuffers::Verifier &verifier) const {
+    return VerifyTableStart(verifier) &&
+           VerifyField<int32_t>(verifier, VT_ARRIVAL_TIME) &&
+           VerifyField<int32_t>(verifier, VT_DEPARTURE_TIME) &&
+           VerifyOffset(verifier, VT_STOP_ID) &&
+           verifier.Verify(stop_id()) &&
+           verifier.EndTable();
+  }
+};
+
+struct NYCBusScheduleBuilder {
+  flatbuffers::FlatBufferBuilder &fbb_;
+  flatbuffers::uoffset_t start_;
+  void add_arrival_time(int32_t arrival_time) {
+    fbb_.AddElement<int32_t>(NYCBusSchedule::VT_ARRIVAL_TIME, arrival_time, 0);
+  }
+  void add_departure_time(int32_t departure_time) {
+    fbb_.AddElement<int32_t>(NYCBusSchedule::VT_DEPARTURE_TIME, departure_time, 0);
+  }
+  void add_stop_id(flatbuffers::Offset<flatbuffers::String> stop_id) {
+    fbb_.AddOffset(NYCBusSchedule::VT_STOP_ID, stop_id);
+  }
+  explicit NYCBusScheduleBuilder(flatbuffers::FlatBufferBuilder &_fbb)
+        : fbb_(_fbb) {
+    start_ = fbb_.StartTable();
+  }
+  NYCBusScheduleBuilder &operator=(const NYCBusScheduleBuilder &);
+  flatbuffers::Offset<NYCBusSchedule> Finish() {
+    const auto end = fbb_.EndTable(start_);
+    auto o = flatbuffers::Offset<NYCBusSchedule>(end);
+    return o;
+  }
+};
+
+inline flatbuffers::Offset<NYCBusSchedule> CreateNYCBusSchedule(
+    flatbuffers::FlatBufferBuilder &_fbb,
+    int32_t arrival_time = 0,
+    int32_t departure_time = 0,
+    flatbuffers::Offset<flatbuffers::String> stop_id = 0) {
+  NYCBusScheduleBuilder builder_(_fbb);
+  builder_.add_stop_id(stop_id);
+  builder_.add_departure_time(departure_time);
+  builder_.add_arrival_time(arrival_time);
+  return builder_.Finish();
+}
+
+inline flatbuffers::Offset<NYCBusSchedule> CreateNYCBusScheduleDirect(
+    flatbuffers::FlatBufferBuilder &_fbb,
+    int32_t arrival_time = 0,
+    int32_t departure_time = 0,
+    const char *stop_id = nullptr) {
+  return nyc::realtime::CreateNYCBusSchedule(
+      _fbb,
       arrival_time,
       departure_time,
       stop_id ? _fbb.CreateString(stop_id) : 0);
@@ -615,6 +998,266 @@ inline flatbuffers::Offset<NYCSubwayTrips> CreateNYCSubwayTripsDirect(
       _fbb,
       timestamp,
       trips ? _fbb.CreateVector<flatbuffers::Offset<NYCSubwayScheduleUpdate>>(*trips) : 0);
+}
+
+struct NYCBusStopUpdate FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
+  enum {
+    VT_TIMESTAMP = 4,
+    VT_TRIP = 6,
+    VT_CURRENT_STATUS = 8,
+    VT_STOP_ID = 10,
+    VT_STOP_DEPARTING_ON = 12,
+    VT_POSITION = 14,
+    VT_DELAY = 16
+  };
+  int32_t timestamp() const {
+    return GetField<int32_t>(VT_TIMESTAMP, 0);
+  }
+  const NYCBusTrip *trip() const {
+    return GetPointer<const NYCBusTrip *>(VT_TRIP);
+  }
+  TripStatus current_status() const {
+    return static_cast<TripStatus>(GetField<int8_t>(VT_CURRENT_STATUS, 0));
+  }
+  const flatbuffers::String *stop_id() const {
+    return GetPointer<const flatbuffers::String *>(VT_STOP_ID);
+  }
+  int32_t stop_departing_on() const {
+    return GetField<int32_t>(VT_STOP_DEPARTING_ON, 0);
+  }
+  const Position *position() const {
+    return GetPointer<const Position *>(VT_POSITION);
+  }
+  int32_t delay() const {
+    return GetField<int32_t>(VT_DELAY, 0);
+  }
+  bool Verify(flatbuffers::Verifier &verifier) const {
+    return VerifyTableStart(verifier) &&
+           VerifyField<int32_t>(verifier, VT_TIMESTAMP) &&
+           VerifyOffset(verifier, VT_TRIP) &&
+           verifier.VerifyTable(trip()) &&
+           VerifyField<int8_t>(verifier, VT_CURRENT_STATUS) &&
+           VerifyOffset(verifier, VT_STOP_ID) &&
+           verifier.Verify(stop_id()) &&
+           VerifyField<int32_t>(verifier, VT_STOP_DEPARTING_ON) &&
+           VerifyOffset(verifier, VT_POSITION) &&
+           verifier.VerifyTable(position()) &&
+           VerifyField<int32_t>(verifier, VT_DELAY) &&
+           verifier.EndTable();
+  }
+};
+
+struct NYCBusStopUpdateBuilder {
+  flatbuffers::FlatBufferBuilder &fbb_;
+  flatbuffers::uoffset_t start_;
+  void add_timestamp(int32_t timestamp) {
+    fbb_.AddElement<int32_t>(NYCBusStopUpdate::VT_TIMESTAMP, timestamp, 0);
+  }
+  void add_trip(flatbuffers::Offset<NYCBusTrip> trip) {
+    fbb_.AddOffset(NYCBusStopUpdate::VT_TRIP, trip);
+  }
+  void add_current_status(TripStatus current_status) {
+    fbb_.AddElement<int8_t>(NYCBusStopUpdate::VT_CURRENT_STATUS, static_cast<int8_t>(current_status), 0);
+  }
+  void add_stop_id(flatbuffers::Offset<flatbuffers::String> stop_id) {
+    fbb_.AddOffset(NYCBusStopUpdate::VT_STOP_ID, stop_id);
+  }
+  void add_stop_departing_on(int32_t stop_departing_on) {
+    fbb_.AddElement<int32_t>(NYCBusStopUpdate::VT_STOP_DEPARTING_ON, stop_departing_on, 0);
+  }
+  void add_position(flatbuffers::Offset<Position> position) {
+    fbb_.AddOffset(NYCBusStopUpdate::VT_POSITION, position);
+  }
+  void add_delay(int32_t delay) {
+    fbb_.AddElement<int32_t>(NYCBusStopUpdate::VT_DELAY, delay, 0);
+  }
+  explicit NYCBusStopUpdateBuilder(flatbuffers::FlatBufferBuilder &_fbb)
+        : fbb_(_fbb) {
+    start_ = fbb_.StartTable();
+  }
+  NYCBusStopUpdateBuilder &operator=(const NYCBusStopUpdateBuilder &);
+  flatbuffers::Offset<NYCBusStopUpdate> Finish() {
+    const auto end = fbb_.EndTable(start_);
+    auto o = flatbuffers::Offset<NYCBusStopUpdate>(end);
+    return o;
+  }
+};
+
+inline flatbuffers::Offset<NYCBusStopUpdate> CreateNYCBusStopUpdate(
+    flatbuffers::FlatBufferBuilder &_fbb,
+    int32_t timestamp = 0,
+    flatbuffers::Offset<NYCBusTrip> trip = 0,
+    TripStatus current_status = TripStatus_AtStation,
+    flatbuffers::Offset<flatbuffers::String> stop_id = 0,
+    int32_t stop_departing_on = 0,
+    flatbuffers::Offset<Position> position = 0,
+    int32_t delay = 0) {
+  NYCBusStopUpdateBuilder builder_(_fbb);
+  builder_.add_delay(delay);
+  builder_.add_position(position);
+  builder_.add_stop_departing_on(stop_departing_on);
+  builder_.add_stop_id(stop_id);
+  builder_.add_trip(trip);
+  builder_.add_timestamp(timestamp);
+  builder_.add_current_status(current_status);
+  return builder_.Finish();
+}
+
+inline flatbuffers::Offset<NYCBusStopUpdate> CreateNYCBusStopUpdateDirect(
+    flatbuffers::FlatBufferBuilder &_fbb,
+    int32_t timestamp = 0,
+    flatbuffers::Offset<NYCBusTrip> trip = 0,
+    TripStatus current_status = TripStatus_AtStation,
+    const char *stop_id = nullptr,
+    int32_t stop_departing_on = 0,
+    flatbuffers::Offset<Position> position = 0,
+    int32_t delay = 0) {
+  return nyc::realtime::CreateNYCBusStopUpdate(
+      _fbb,
+      timestamp,
+      trip,
+      current_status,
+      stop_id ? _fbb.CreateString(stop_id) : 0,
+      stop_departing_on,
+      position,
+      delay);
+}
+
+struct NYCBusScheduleUpdate FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
+  enum {
+    VT_TIMESTAMP = 4,
+    VT_TRIP = 6,
+    VT_SCHEDULE = 8
+  };
+  int32_t timestamp() const {
+    return GetField<int32_t>(VT_TIMESTAMP, 0);
+  }
+  const NYCBusTrip *trip() const {
+    return GetPointer<const NYCBusTrip *>(VT_TRIP);
+  }
+  const flatbuffers::Vector<flatbuffers::Offset<NYCBusSchedule>> *schedule() const {
+    return GetPointer<const flatbuffers::Vector<flatbuffers::Offset<NYCBusSchedule>> *>(VT_SCHEDULE);
+  }
+  bool Verify(flatbuffers::Verifier &verifier) const {
+    return VerifyTableStart(verifier) &&
+           VerifyField<int32_t>(verifier, VT_TIMESTAMP) &&
+           VerifyOffset(verifier, VT_TRIP) &&
+           verifier.VerifyTable(trip()) &&
+           VerifyOffset(verifier, VT_SCHEDULE) &&
+           verifier.Verify(schedule()) &&
+           verifier.VerifyVectorOfTables(schedule()) &&
+           verifier.EndTable();
+  }
+};
+
+struct NYCBusScheduleUpdateBuilder {
+  flatbuffers::FlatBufferBuilder &fbb_;
+  flatbuffers::uoffset_t start_;
+  void add_timestamp(int32_t timestamp) {
+    fbb_.AddElement<int32_t>(NYCBusScheduleUpdate::VT_TIMESTAMP, timestamp, 0);
+  }
+  void add_trip(flatbuffers::Offset<NYCBusTrip> trip) {
+    fbb_.AddOffset(NYCBusScheduleUpdate::VT_TRIP, trip);
+  }
+  void add_schedule(flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<NYCBusSchedule>>> schedule) {
+    fbb_.AddOffset(NYCBusScheduleUpdate::VT_SCHEDULE, schedule);
+  }
+  explicit NYCBusScheduleUpdateBuilder(flatbuffers::FlatBufferBuilder &_fbb)
+        : fbb_(_fbb) {
+    start_ = fbb_.StartTable();
+  }
+  NYCBusScheduleUpdateBuilder &operator=(const NYCBusScheduleUpdateBuilder &);
+  flatbuffers::Offset<NYCBusScheduleUpdate> Finish() {
+    const auto end = fbb_.EndTable(start_);
+    auto o = flatbuffers::Offset<NYCBusScheduleUpdate>(end);
+    return o;
+  }
+};
+
+inline flatbuffers::Offset<NYCBusScheduleUpdate> CreateNYCBusScheduleUpdate(
+    flatbuffers::FlatBufferBuilder &_fbb,
+    int32_t timestamp = 0,
+    flatbuffers::Offset<NYCBusTrip> trip = 0,
+    flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<NYCBusSchedule>>> schedule = 0) {
+  NYCBusScheduleUpdateBuilder builder_(_fbb);
+  builder_.add_schedule(schedule);
+  builder_.add_trip(trip);
+  builder_.add_timestamp(timestamp);
+  return builder_.Finish();
+}
+
+inline flatbuffers::Offset<NYCBusScheduleUpdate> CreateNYCBusScheduleUpdateDirect(
+    flatbuffers::FlatBufferBuilder &_fbb,
+    int32_t timestamp = 0,
+    flatbuffers::Offset<NYCBusTrip> trip = 0,
+    const std::vector<flatbuffers::Offset<NYCBusSchedule>> *schedule = nullptr) {
+  return nyc::realtime::CreateNYCBusScheduleUpdate(
+      _fbb,
+      timestamp,
+      trip,
+      schedule ? _fbb.CreateVector<flatbuffers::Offset<NYCBusSchedule>>(*schedule) : 0);
+}
+
+struct NYCBusTrips FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
+  enum {
+    VT_TIMESTAMP = 4,
+    VT_TRIPS = 6
+  };
+  int32_t timestamp() const {
+    return GetField<int32_t>(VT_TIMESTAMP, 0);
+  }
+  const flatbuffers::Vector<flatbuffers::Offset<NYCBusScheduleUpdate>> *trips() const {
+    return GetPointer<const flatbuffers::Vector<flatbuffers::Offset<NYCBusScheduleUpdate>> *>(VT_TRIPS);
+  }
+  bool Verify(flatbuffers::Verifier &verifier) const {
+    return VerifyTableStart(verifier) &&
+           VerifyField<int32_t>(verifier, VT_TIMESTAMP) &&
+           VerifyOffset(verifier, VT_TRIPS) &&
+           verifier.Verify(trips()) &&
+           verifier.VerifyVectorOfTables(trips()) &&
+           verifier.EndTable();
+  }
+};
+
+struct NYCBusTripsBuilder {
+  flatbuffers::FlatBufferBuilder &fbb_;
+  flatbuffers::uoffset_t start_;
+  void add_timestamp(int32_t timestamp) {
+    fbb_.AddElement<int32_t>(NYCBusTrips::VT_TIMESTAMP, timestamp, 0);
+  }
+  void add_trips(flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<NYCBusScheduleUpdate>>> trips) {
+    fbb_.AddOffset(NYCBusTrips::VT_TRIPS, trips);
+  }
+  explicit NYCBusTripsBuilder(flatbuffers::FlatBufferBuilder &_fbb)
+        : fbb_(_fbb) {
+    start_ = fbb_.StartTable();
+  }
+  NYCBusTripsBuilder &operator=(const NYCBusTripsBuilder &);
+  flatbuffers::Offset<NYCBusTrips> Finish() {
+    const auto end = fbb_.EndTable(start_);
+    auto o = flatbuffers::Offset<NYCBusTrips>(end);
+    return o;
+  }
+};
+
+inline flatbuffers::Offset<NYCBusTrips> CreateNYCBusTrips(
+    flatbuffers::FlatBufferBuilder &_fbb,
+    int32_t timestamp = 0,
+    flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<NYCBusScheduleUpdate>>> trips = 0) {
+  NYCBusTripsBuilder builder_(_fbb);
+  builder_.add_trips(trips);
+  builder_.add_timestamp(timestamp);
+  return builder_.Finish();
+}
+
+inline flatbuffers::Offset<NYCBusTrips> CreateNYCBusTripsDirect(
+    flatbuffers::FlatBufferBuilder &_fbb,
+    int32_t timestamp = 0,
+    const std::vector<flatbuffers::Offset<NYCBusScheduleUpdate>> *trips = nullptr) {
+  return nyc::realtime::CreateNYCBusTrips(
+      _fbb,
+      timestamp,
+      trips ? _fbb.CreateVector<flatbuffers::Offset<NYCBusScheduleUpdate>>(*trips) : 0);
 }
 
 }  // namespace realtime

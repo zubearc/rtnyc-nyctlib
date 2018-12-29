@@ -64,6 +64,13 @@ namespace nyctlib {
 	// INTERNAL PARSING + LOADING
 	bool GtfsFeedParser::parseTripUpdate(const transit_realtime::TripUpdate &tripupdate, GtfsTripUpdate &out) {
 		out.timestamp = tripupdate.timestamp();
+
+		auto vehicle = tripupdate.vehicle();
+
+		if (vehicle.has_id()) {
+			out.trip->vehicle_id = vehicle.id();
+		}
+
 		return true;
 	}
 
@@ -72,6 +79,19 @@ namespace nyctlib {
 		auto currentStopProgress = vehicleposition.current_status();
 		out.timestamp = vehicleposition.timestamp();
 		out.stop_id = vehicleposition.stop_id();
+
+		auto vehicle = vehicleposition.vehicle();
+
+		if (vehicle.has_id()) {
+			out.trip->vehicle_id = vehicle.id();
+		}
+
+		if (vehicleposition.has_position()) {
+			auto position = vehicleposition.position();
+			out.latitude = position.latitude();
+			out.longitude = position.longitude();
+			out.bearing = position.bearing();
+		}
 
 		std::string progressstring;
 
@@ -90,17 +110,17 @@ namespace nyctlib {
 
 		PRINTDBG(" - is %s stop #%d, %s (last updated %lld)\n", progressstring.c_str(), out.current_stop_index, out.stop_id.c_str(), out.timestamp);
 
+
 		return true;
 	}
 
 
 	bool GtfsFeedParser::loadTripUpdate(const transit_realtime::TripUpdate &tripupdate, GtfsTripUpdate &out) {
-		
+
+		out.trip = std::make_shared<GtfsTrip>();
 		parseTripUpdate(tripupdate, out);
 
-		auto out_trip = std::make_shared<GtfsTrip>();
-		loadTrip(tripupdate.trip(), *out_trip.get());
-		out.trip = std::move(out_trip);
+		loadTrip(tripupdate.trip(), *out.trip.get());
 
 		auto stoptimeupdates = tripupdate.stop_time_update();
 
@@ -115,11 +135,10 @@ namespace nyctlib {
 
 	bool GtfsFeedParser::loadVehicleUpdate(const transit_realtime::VehiclePosition &vehicleposition, GtfsVehicleUpdate &out) {
 
+		out.trip = std::make_shared<GtfsTrip>();
 		this->parseVehicleUpdate(vehicleposition, out);
 
-		auto out_trip = std::make_shared<GtfsTrip>();
-		this->loadTrip(vehicleposition.trip(), *out_trip.get());
-		out.trip = std::move(out_trip);
+		this->loadTrip(vehicleposition.trip(), *out.trip.get());
 
 		return true;
 ;	}
@@ -147,6 +166,7 @@ namespace nyctlib {
 		}
 
 		if (entity.has_vehicle()) {
+			//std::cout << "Reading Vehicle:\n" << entity.DebugString() << std::endl;
 			auto vech_update = std::make_shared<GtfsVehicleUpdate>();
 			if (!this->loadVehicleUpdate(entity.vehicle(), *vech_update.get())) {
 				fprintf(stderr, "FAILED TO PARSE VEHICLE UPDATE for entity '%s'\n", entity_id.c_str());

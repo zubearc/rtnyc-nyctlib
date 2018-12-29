@@ -19,6 +19,7 @@ namespace nyctlib {
 		std::string trip_id;
 		std::string start_date;
 		std::string route_id;
+		std::string vehicle_id;
 	};
 
 	struct GtfsVehicleUpdate {
@@ -27,6 +28,11 @@ namespace nyctlib {
 		std::shared_ptr<GtfsTrip> trip;
 		GtfsVehicleProgress stop_progress;
 		std::string stop_id;
+
+		// bus below
+		float latitude = 0;
+		float longitude = 0;
+		float bearing = -1;
 	};
 
 	struct GtfsTripTimeUpdate {

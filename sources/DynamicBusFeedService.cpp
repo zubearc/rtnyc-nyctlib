@@ -1,20 +1,15 @@
-#include "DynamicNYCTFeedService.h"
-
+#include "DynamicBusFeedService.h"
 #include "SimpleHTTPRequest.h"
-
-#ifdef _WIN32
-#define ALWAYS_CLEAN
-#endif
+#include <ctime>
 
 namespace nyctlib {
-	void DynamicNYCTFeedService::update() {
-
+	void DynamicBusFeedService::update(){
 	}
 
-	std::shared_ptr<NYCTFeedParser> DynamicNYCTFeedService::getLatestFeed() {
+	std::shared_ptr<GtfsFeedParser> DynamicBusFeedService::getLatestFeed() {
 		long long ts = time(NULL);
 
-		std::string file_path = "gtfs_nycts_" + std::to_string(ts) + ".bin";
+		std::string file_path = "gtfs_nyctb_" + std::to_string(ts) + ".bin";
 
 		try {
 			SimpleHTTPRequest requester;
@@ -22,7 +17,7 @@ namespace nyctlib {
 			if (!ret)
 				throw std::exception(); // yes i am an idiot for doing this
 		} catch (std::exception &ex) {
-			fprintf(stderr, "Failed to update NYCT feed!\n");
+			fprintf(stderr, "DynamicBusFeedService: Failed to update bus feed!\n");
 			return nullptr;
 		}
 
@@ -32,10 +27,10 @@ namespace nyctlib {
 			printf("Deleting %s: %d\n", file_path.c_str(), remove(file_path.c_str()));
 		};
 
-		auto parser = std::make_shared<NYCTFeedParser>();
-		
+		auto parser = std::make_shared<GtfsFeedParser>();
+
 		if (!parser->loadFile(file_path)) {
-			printf("Failed to read buffer!!\n");
+			printf("DynamicBusFeedService: Failed to read buffer!!\n");
 			cleanup();
 			return nullptr;
 		}
@@ -45,13 +40,13 @@ namespace nyctlib {
 		auto _last_feed_time = this->latest_feed_stamp;
 
 		if (new_feed_time < _last_feed_time) {
-			printf("DynamicNYCTFeedService.cpp: Somehow got a feed TS (%lld) which is older than our previous feed TS (%lld)?!\n", new_feed_time, _last_feed_time);
+			printf("DynamicBusFeedService: Somehow got a feed TS (%lld) which is older than our previous feed TS (%lld)?!\n", new_feed_time, _last_feed_time);
 			cleanup();
 			return nullptr;
 		}
 
 		if (new_feed_time == _last_feed_time) {
-			printf("DynamicNYCTFeedService.cpp: Feed data has same TS as last TS (%lld).\n", new_feed_time);
+			printf("DynamicBusFeedService: Feed data has same TS as last TS (%lld).\n", new_feed_time);
 			cleanup();
 			return nullptr;
 		}
@@ -66,7 +61,13 @@ namespace nyctlib {
 		return parser;
 	}
 
-	std::shared_ptr<NYCTFeedParser> DynamicNYCTFeedService::getCurrentFeed() {
+	std::shared_ptr<GtfsFeedParser> DynamicBusFeedService::getCurrentFeed() {
+		long long current_ts = time(NULL);
+		if ((latest_feed_stamp > 0) && ((current_ts - latest_feed_stamp) < 10)) {
+			printf("DynamicBusFeedService: Not getting new feed as last was updated < 10s ago (%lld - %lld)\n",
+				this->latest_feed_stamp, current_ts);
+			return nullptr;
+		}
 		return getLatestFeed();
 	}
 }

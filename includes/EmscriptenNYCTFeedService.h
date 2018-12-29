@@ -8,7 +8,7 @@
 #include <emscripten/val.h>
 
 namespace nyctlib {
-	class EmscriptenNYCTFeedService : public IFeedService {
+	class EmscriptenNYCTFeedService : public IFeedService<NYCTFeedParser> {
 public:
 		virtual void update() {};
 

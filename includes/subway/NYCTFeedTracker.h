@@ -13,12 +13,11 @@
 
 namespace nyctlib {
 	class NYCTFeedTracker {
-		std::unique_ptr<IFeedService> feed;
+		INYCTFeedServicePtr feed;
 
 		int tracked_ticker = 0;
 
 		long long last_update_time;
-
 
 		std::map<std::string /* ATS ID */, SubwayTrackedTrip> tracked_trips2;
 		std::atomic<bool> active;
@@ -55,9 +54,10 @@ namespace nyctlib {
 		NYCTFeedTracker() : feed(std::make_unique<NYCTFeedService>()) {}
 #endif
 
-		NYCTFeedTracker(std::unique_ptr<IFeedService> &&feed) : feed(std::move(feed)) {};
+		NYCTFeedTracker(INYCTFeedServicePtr &feed) : feed(std::move(feed)) {};
 
-		NYCTFeedTracker(std::unique_ptr<IFeedService> &&feed, std::shared_ptr<BlockingEventHolder<SubwayTripEvent>> event_holder)
+		NYCTFeedTracker(INYCTFeedServicePtr &feed,
+			std::shared_ptr<BlockingEventHolder<SubwayTripEvent>> event_holder)
 			: feed(std::move(feed)), eventHolder(event_holder) {};
 
 		bool update();
@@ -68,7 +68,7 @@ namespace nyctlib {
 			active = false;
 		}
 
-		inline IFeedService* getFeedService() {
+		inline INYCTFeedService* getFeedService() {
 			return feed.get();
 		}
 

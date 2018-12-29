@@ -24,39 +24,39 @@
 // thank you microsoft for not being standards-compliant
 // https://stackoverflow.com/a/17837382
 template <typename ...Args>
-void LOG_FT_DEBUG(const char *text, Args... args) {
+inline void LOG_FT_DEBUG(const char *text, Args... args) {
 	if ((g_logging_level & LogDebug) > 0) {
 		fprintf(g_logging_output_pointer, "DEBUG ");
 		fprintf(g_logging_output_pointer, text, args...);
 	}
 }
-void LOG_FT_DEBUG(const char *text) {
+inline void LOG_FT_DEBUG(const char *text) {
 	if ((g_logging_level & LogDebug) > 0) {
 		fprintf(g_logging_output_pointer, "DEBUG ");
 		fprintf(g_logging_output_pointer, text);
 	}
 }
 template <typename ...Args>
-void LOG_FT_INFO(const char *text, Args... args) {
+inline void LOG_FT_INFO(const char *text, Args... args) {
 	if ((g_logging_level & LogInfo) > 0) {
 		fprintf(g_logging_output_pointer, "INFO ");
 		fprintf(g_logging_output_pointer, text, args...);
 	}
 }
-void LOG_FT_INFO(const char *text) {
+inline void LOG_FT_INFO(const char *text) {
 	if ((g_logging_level & LogInfo) > 0) {
 		fprintf(g_logging_output_pointer, "INFO ");
 		fprintf(g_logging_output_pointer, text);
 	}
 }
 template <typename ...Args>
-void LOG_FT_WARN(const char *text, Args ...args) {
+inline void LOG_FT_WARN(const char *text, Args ...args) {
 	if ((g_logging_level & LogWarn) > 0) {
 		fprintf(stderr, "WARN ");
 		fprintf(stderr, text, args...);
 	}
 }
-void LOG_FT_WARN(const char *text) {
+inline void LOG_FT_WARN(const char *text) {
 	if ((g_logging_level & LogWarn) > 0) {
 		fprintf(stderr, "WARN ");
 		fprintf(stderr, text);

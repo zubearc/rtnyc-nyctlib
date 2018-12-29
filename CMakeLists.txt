@@ -12,8 +12,11 @@ set(NYCTLIB_SOURCES
 	#
 	sources/gtfs/GtfsFeedParser.cpp
 	sources/gtfs/NYCTFeedParser.cpp
+
 	sources/NYCTFeedService.cpp
+	
 	sources/subway/NYCTFeedTracker.cpp
+	sources/busses/NYCBusTracker.cpp
 )
 
 set(CMAKE_CXX_STANDARD 14)
@@ -40,6 +43,7 @@ else()
 	set(NYCTLIB_EXECUTABLE_SOURCES
 		sources/ReplayFeedService.cpp
 		sources/DynamicNYCTFeedService.cpp
+		sources/DynamicBusFeedService.cpp
 		sources/interfaces/ConsoleInterface.cpp
 		sources/json11.cpp
 	)
@@ -47,6 +51,8 @@ else()
 	if (NOT NO_INTERFACE_BUILD)
 		set(NYCTLIB_EXECUTABLE_SOURCES ${NYCTLIB_EXECUTABLE_SOURCES} "sources/interfaces/WSInterface.cpp")
 		set(NYCTLIB_EXECUTABLE_SOURCES ${NYCTLIB_EXECUTABLE_SOURCES} "sources/interfaces/NYCTSubwayInterface.cpp")
+		set(NYCTLIB_EXECUTABLE_SOURCES ${NYCTLIB_EXECUTABLE_SOURCES} "sources/interfaces/NYCBusInterface.cpp")
+
 	endif()
 
 	# Add source to this project's executable.

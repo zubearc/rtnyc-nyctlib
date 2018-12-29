@@ -4,18 +4,6 @@
 #include "Logging.h"
 #include "TimeUtil.h"
 
-#ifdef _WIN32
-#include <windows.h>
-// Sleep for a given number of milliseconds
-#define SLEEP Sleep
-#else
-#include <unistd.h>
-// Sleep for a given number of milliseconds
-#define SLEEP(x) usleep(x * 1000)
-#define min(a,b) (((a)<(b))?(a):(b))
-#define max(a,b) (((a)>(b))?(a):(b))
-#endif
-
 namespace nyctlib {
 	void NYCTFeedTracker::clearTrackedDataForTrip(std::string tripid) {
 		this->tracked_trips2.erase(tripid);

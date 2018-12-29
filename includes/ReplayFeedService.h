@@ -10,7 +10,7 @@ namespace fs = std::experimental::filesystem;
 
 namespace nyctlib {
 	template <typename TFeedParser>
-	class ReplayFeedService : public IFeedService {
+	class ReplayFeedService : public IFeedService<TFeedParser> {
 	public:
 		std::vector<std::string /* File Names */> protobuf_list;
 		int current_protobuf_index = 0;

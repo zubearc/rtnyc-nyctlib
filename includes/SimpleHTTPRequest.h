@@ -6,14 +6,14 @@
 #include <iostream>
 
 extern "C" {
-	size_t curl_write_data(void *ptr, size_t size, size_t nmemb, void *stream) {
+	inline size_t curl_write_data(void *ptr, size_t size, size_t nmemb, void *stream) {
 		const char *cdata = (const char*)ptr;
 		std::string data((const char*)ptr, (size_t)size * nmemb);
 		*((std::stringstream*)stream) << data << std::endl;
 		return size * nmemb;
 	}
 
-	size_t curl_write_data_file(void *ptr, size_t size, size_t nmemb, FILE *stream) {
+	inline size_t curl_write_data_file(void *ptr, size_t size, size_t nmemb, FILE *stream) {
 		size_t written = fwrite(ptr, size, nmemb, stream);
 		return written;
 	};

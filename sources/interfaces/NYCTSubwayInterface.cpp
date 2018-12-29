@@ -376,7 +376,7 @@ namespace nyctlib {
 					}
 				}
 
-				this->wsInterface->broadcastBinaryPreferredBatch(messages);
+				this->wsInterface->broadcastBinaryPreferredBatch(WSInterface::MessageType::SubscribtionFeed, messages);
 				// Cleanup is already done for us in above function
 				/*for (auto message : messages) {
 					delete[] *message.message;
@@ -435,7 +435,7 @@ namespace nyctlib {
 			}
 		}
 		
-		this->wsInterface->broadcastBinaryPreferredBatch(messages);
+		this->wsInterface->broadcastBinaryPreferredBatch(WSInterface::MessageType::Response, messages);
 		// TODO: Make it so we don't broadcast to everyone
 	}
 }

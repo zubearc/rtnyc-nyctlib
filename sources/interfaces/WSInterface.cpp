@@ -33,7 +33,7 @@ namespace nyctlib {
 	void WSInterface::createJsonResponseHead(json11::Json::object &object, MessageType message_type) {
 		object["v"] = 1;
 		object["ts"] = (int)time(NULL);
-		object["t"] = message_type;
+		object["t"] = (int)message_type;
 	}
 
 	void WSInterface::processTextMessage(Client client, char *message, size_t length) {
@@ -263,7 +263,7 @@ namespace nyctlib {
 #ifdef _WIN32
 			// Fixes bug with sending multiple messages one after the other
 			// That would result in program faults
-			Sleep(100);
+			Sleep(90);
 #endif
 			if (!ws->isClosed()) {
 				ws->sendPrepared(prepared);
@@ -271,15 +271,16 @@ namespace nyctlib {
 		}
 	}
 
-	void WSInterface::broadcastBinaryPreferred(int message_type, char *message, int message_len) {
+	void WSInterface::broadcastBinaryPreferred(MessageType reason, int message_type, char *message, int message_len) {
 		LOG_DEBUG("WSI: Writing %d bytes with message_type=%d", message_len, message_type);
-		char *ws_message = new char[message_len + 14 /* message_len int, message_type int */];
-		short version = 1;
+		char *ws_message = new char[message_len + 16 /* message_len int, message_type int */];
+		short version = 2;
 		memcpy(ws_message, &version, 2);
-		memcpy(ws_message + 2, &message_len, 4);
-		memcpy(ws_message + 6, &message_type, 4);
-		memcpy(ws_message + 10, message, message_len);
-		memset(ws_message + message_len + 10, 0, 4); // zero term
+		memcpy(ws_message + 2, &reason, 2);
+		memcpy(ws_message + 4, &message_len, 4);
+		memcpy(ws_message + 8, &message_type, 4);
+		memcpy(ws_message + 12, message, message_len);
+		memset(ws_message + message_len + 12, 0, 4); // zero term
 
 		auto prepared = uWS::WebSocket<uWS::SERVER>::prepareMessage(ws_message, message_len + 10, uWS::BINARY, false);
 		for (auto client : client_map) {
@@ -291,7 +292,7 @@ namespace nyctlib {
 		delete[] ws_message;
 	}
 
-	void WSInterface::broadcastBinaryPreferredBatch(std::vector<BinaryMessageWrapper> messages) {
+	void WSInterface::broadcastBinaryPreferredBatch(MessageType reason, std::vector<BinaryMessageWrapper> messages) {
 		int current_index = 0;
 		int messages_len = 0;
 		for (auto &message : messages) {
@@ -299,11 +300,13 @@ namespace nyctlib {
 		}
 		LOG_DEBUG("WSI: Writing %d batch messages -- len=%d\n", messages.size(), messages_len);
 
+		char *ws_message = new char[messages_len + 8 /* 2 byte, 2 byte reason, end 4 byte padding */];
 
-		char *ws_message = new char[messages_len + 6 /* 2 byte, end 4 byte padding */];
-
-		short version = 1;
+		short version = 2;
 		memcpy(ws_message, &version, 2);
+		current_index += 2;
+
+		memcpy(ws_message + 2, &reason, 2);
 		current_index += 2;
 
 		for (auto message : messages) {
