@@ -29,6 +29,8 @@ struct NYCSubwayScheduleUpdate;
 
 struct NYCSubwayTrips;
 
+struct NYCSubwayTripComplete;
+
 struct NYCBusStopUpdate;
 
 struct NYCBusScheduleUpdate;
@@ -998,6 +1000,67 @@ inline flatbuffers::Offset<NYCSubwayTrips> CreateNYCSubwayTripsDirect(
       _fbb,
       timestamp,
       trips ? _fbb.CreateVector<flatbuffers::Offset<NYCSubwayScheduleUpdate>>(*trips) : 0);
+}
+
+struct NYCSubwayTripComplete FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
+  enum {
+    VT_TIMESTAMP = 4,
+    VT_TRIP_ID = 6
+  };
+  int32_t timestamp() const {
+    return GetField<int32_t>(VT_TIMESTAMP, 0);
+  }
+  const flatbuffers::String *trip_id() const {
+    return GetPointer<const flatbuffers::String *>(VT_TRIP_ID);
+  }
+  bool Verify(flatbuffers::Verifier &verifier) const {
+    return VerifyTableStart(verifier) &&
+           VerifyField<int32_t>(verifier, VT_TIMESTAMP) &&
+           VerifyOffset(verifier, VT_TRIP_ID) &&
+           verifier.Verify(trip_id()) &&
+           verifier.EndTable();
+  }
+};
+
+struct NYCSubwayTripCompleteBuilder {
+  flatbuffers::FlatBufferBuilder &fbb_;
+  flatbuffers::uoffset_t start_;
+  void add_timestamp(int32_t timestamp) {
+    fbb_.AddElement<int32_t>(NYCSubwayTripComplete::VT_TIMESTAMP, timestamp, 0);
+  }
+  void add_trip_id(flatbuffers::Offset<flatbuffers::String> trip_id) {
+    fbb_.AddOffset(NYCSubwayTripComplete::VT_TRIP_ID, trip_id);
+  }
+  explicit NYCSubwayTripCompleteBuilder(flatbuffers::FlatBufferBuilder &_fbb)
+        : fbb_(_fbb) {
+    start_ = fbb_.StartTable();
+  }
+  NYCSubwayTripCompleteBuilder &operator=(const NYCSubwayTripCompleteBuilder &);
+  flatbuffers::Offset<NYCSubwayTripComplete> Finish() {
+    const auto end = fbb_.EndTable(start_);
+    auto o = flatbuffers::Offset<NYCSubwayTripComplete>(end);
+    return o;
+  }
+};
+
+inline flatbuffers::Offset<NYCSubwayTripComplete> CreateNYCSubwayTripComplete(
+    flatbuffers::FlatBufferBuilder &_fbb,
+    int32_t timestamp = 0,
+    flatbuffers::Offset<flatbuffers::String> trip_id = 0) {
+  NYCSubwayTripCompleteBuilder builder_(_fbb);
+  builder_.add_trip_id(trip_id);
+  builder_.add_timestamp(timestamp);
+  return builder_.Finish();
+}
+
+inline flatbuffers::Offset<NYCSubwayTripComplete> CreateNYCSubwayTripCompleteDirect(
+    flatbuffers::FlatBufferBuilder &_fbb,
+    int32_t timestamp = 0,
+    const char *trip_id = nullptr) {
+  return nyc::realtime::CreateNYCSubwayTripComplete(
+      _fbb,
+      timestamp,
+      trip_id ? _fbb.CreateString(trip_id) : 0);
 }
 
 struct NYCBusStopUpdate FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {

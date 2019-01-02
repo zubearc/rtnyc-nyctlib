@@ -7,6 +7,10 @@
 namespace nyctlib {
 	void NYCTFeedTracker::clearTrackedDataForTrip(std::string tripid) {
 		this->tracked_trips2.erase(tripid);
+		SubwayTripEvent event;
+		event.trip_id = tripid;
+		event.event_category = SubwayTripEvent::TripComplete;
+		this->queueEvent(event);
 	}
 
 	void NYCTFeedTracker::processTripTimeUpdates(std::string tripid, std::vector<std::shared_ptr<GtfsTripTimeUpdate>>& old, std::vector<std::shared_ptr<GtfsTripTimeUpdate>>& current, const NYCTTripUpdate *tu) {
@@ -493,6 +497,11 @@ namespace nyctlib {
 					LOG_FT_INFO("NYCTrainTracker: " CH_BLUE "Trip '%s' is complete and has reached its scheduled terminal.\n" CRESET, tripid.c_str());
 				} else {
 					LOG_FT_INFO("NYCTTrainTracker: " CH_RED "Lost track of trip '%s'" CRESET "\n", tripid.c_str());
+					SubwayTripEvent event;
+					event.event_category = SubwayTripEvent::LostTrip;
+					event.initial_tracked_trip = &tracked;
+					event.trip_id = tripid;
+					this->queueEvent(event);
 				}
 
 				LOG_FT_DEBUG("NYCTTrainTracker: Index was %d/%d (%s/%s)\n",

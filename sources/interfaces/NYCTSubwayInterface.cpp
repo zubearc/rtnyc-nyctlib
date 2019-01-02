@@ -89,6 +89,7 @@ namespace nyctlib {
 		json11::Json j(json);
 		return j;
 	}
+	
 	json11::Json NYCTSubwayInterface::jBuildTripScheduleUpdate(SubwayTripEvent &e) {
 		auto tu = e.trip_update;
 		NYCTTrip *trip = (NYCTTrip*)tu.trip.get();
@@ -127,6 +128,15 @@ namespace nyctlib {
 		else
 			event_type = "UnknownTripUpdate";
 		wsInterface->broadcast("subway", event_type, data);*/
+	}
+
+	json11::Json jBuildTripCompleteUpdate(SubwayTripEvent &e) {
+		auto tid = e.trip_id;
+
+		Json::object json;
+		json["tripid"] = tid;
+		json11::Json j(json);
+		return j;
 	}
 
 	void NYCTSubwayInterface::fBuildStopMessageUpdate(SubwayTripEvent &e, unsigned char* &message, int &message_len) {
@@ -235,11 +245,13 @@ namespace nyctlib {
 	flatbuffers::Offset<nyc::realtime::NYCSubwayTrip> buildTrip(flatbuffers::FlatBufferBuilder &builder, NYCTTrip *trip) {
 		auto _trip_id = builder.CreateString(trip->trip_id);
 		auto _nyct_train_id = builder.CreateString(trip->nyct_train_id);
+		auto _trip_route_id = builder.CreateString(trip->route_id);
 
 		nyc::realtime::NYCSubwayTripBuilder trip_buffer(builder);
 		trip_buffer.add_gtfs_trip_id(_trip_id);
 		trip_buffer.add_trip_id(_nyct_train_id);
 		trip_buffer.add_assigned(trip->nyct_is_assigned);
+		trip_buffer.add_route_id(_trip_route_id);
 		//trip_buffer.add_direction(0); // unused for now
 		return trip_buffer.Finish();
 	}
@@ -263,7 +275,8 @@ namespace nyctlib {
 			nyc::realtime::NYCSubwayScheduleBuilder schedule_buffer(builder);
 			schedule_buffer.add_scheduled_track(_scheduled_track);
 			schedule_buffer.add_actual_track(_actual_track);
-			schedule_buffer.add_departure_time((int)s->arrival_time);
+			schedule_buffer.add_arrival_time((int)s->arrival_time);
+			schedule_buffer.add_departure_time((int)s->depature_time);
 			schedule_buffer.add_stop_id(_stop_id);
 			auto off = schedule_buffer.Finish();
 			schedules.push_back(off);
@@ -295,11 +308,38 @@ namespace nyctlib {
 		return;
 	}
 
+	void fBuildTripCompleteUpdate(SubwayTripEvent &e, unsigned char* &message, int &message_len) {
+		flatbuffers::FlatBufferBuilder builder(1024);
+
+		auto _trip_id = builder.CreateString(e.trip_id);
+
+		nyc::realtime::NYCSubwayTripCompleteBuilder trip_complete_builder(builder);
+		trip_complete_builder.add_trip_id(_trip_id);
+
+		auto off = trip_complete_builder.Finish();
+
+		builder.Finish(off);
+
+		auto fbuffer = builder.GetBufferPointer();
+		auto size = builder.GetSize();
+		auto buffer = new unsigned char[size];
+
+		/*std::string sbuf((char*)fbuffer, size);
+		printf("\n%d BYTES BEFORE: ", size);
+		std::cout << Andromeda::string_to_hex(sbuf) << std::endl;*/
+
+		memcpy(buffer, fbuffer, size);
+
+		message = buffer;
+		message_len = size;
+		return;
+	}
+
 	void NYCTSubwayInterface::run() {
 		running = true;
 		while (running) {
-			SubwayTripEvent tracked_trip[16];
-			auto count = holder->queue.wait_dequeue_bulk(tracked_trip, 16);
+			SubwayTripEvent tracked_trip[16 + 64];
+			auto count = holder->queue.wait_dequeue_bulk(tracked_trip, 16 + 64);
 
 			if (wsInterface->has_json_clients > 0)
 			{
@@ -318,6 +358,9 @@ namespace nyctlib {
 						break;
 					case SubwayTripEvent::ScheduleChange:
 						data.push_back(std::make_pair("ScheduleChange", jBuildTripScheduleUpdate(trip)));
+						break;
+					case SubwayTripEvent::TripComplete:
+						data.push_back(std::make_pair("TripComplete", jBuildTripCompleteUpdate(trip)));
 						break;
 					default:
 						printf("Ignoring unknown event\n");
@@ -363,12 +406,17 @@ namespace nyctlib {
 						unsigned char *buffer = nullptr;
 						int buffer_len = 0;
 						fBuildTripScheduleUpdate(trip, buffer, buffer_len);
+						messages.push_back({ WSInterface::NYCSubway_ScheduleChange, buffer, buffer_len });
+						break;
+					}
+					case SubwayTripEvent::TripComplete:
+					{
+						unsigned char *buffer = nullptr;
+						int buffer_len = 0;
+						fBuildTripCompleteUpdate(trip, buffer, buffer_len);
 						assert(buffer != nullptr);
 						printf("Buffer ptr: %d", buffer);
-						messages.push_back({ WSInterface::NYCSubway_ScheduleChange, buffer, buffer_len });
-						/*this->wsInterface->broadcastBinaryPreferred(
-							WSInterface::NYCSubway_ScheduleChange, (char*)buffer, buffer_len);
-						delete[] buffer;*/
+						messages.push_back({ WSInterface::NYCSubway_TripComplete, buffer, buffer_len });
 						break;
 					}
 					default:

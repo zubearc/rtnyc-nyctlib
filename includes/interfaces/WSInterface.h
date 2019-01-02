@@ -42,6 +42,7 @@ namespace nyctlib {
 			NYCSubway_StopChange = 0x1001,
 			NYCSubway_TripAssigned,
 			NYCSubway_ScheduleChange,
+			NYCSubway_TripComplete,
 
 			NYCSubway_CurrentTripsResponse = 0x1011,
 
