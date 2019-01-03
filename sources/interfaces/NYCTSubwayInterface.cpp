@@ -338,8 +338,8 @@ namespace nyctlib {
 	void NYCTSubwayInterface::run() {
 		running = true;
 		while (running) {
-			SubwayTripEvent tracked_trip[16 + 64];
-			auto count = holder->queue.wait_dequeue_bulk(tracked_trip, 16 + 64);
+			SubwayTripEvent tracked_trip[32];
+			auto count = holder->queue.wait_dequeue_bulk(tracked_trip, 32);
 
 			if (wsInterface->has_json_clients > 0)
 			{
