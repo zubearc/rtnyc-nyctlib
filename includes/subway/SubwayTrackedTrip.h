@@ -18,7 +18,14 @@ namespace nyctlib {
 		std::vector<NYCTTripTimeUpdate> initial_trip_schedule;
 		std::vector<std::vector<NYCTTripTimeUpdate>> updated_trip_schedules;
 
-		std::vector<std::pair<std::string, long long>> confirmed_stops;
+		// Used for checking difference in feed messages
+		struct ConfirmedStop {
+			std::string stop_id;
+			long long timestamp = 0;
+			std::string arrival_track;
+			int stop_sequence;
+		};
+		std::vector<ConfirmedStop> confirmed_stops;
 
 		// GTFS "Trip IDs" associated with this trip. Used only for archival purposes.
 		std::vector<std::pair<std::string, long long>> gtfs_trip_paths;

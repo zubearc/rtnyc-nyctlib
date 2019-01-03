@@ -205,9 +205,9 @@ namespace nyctlib {
 
 		auto tracked_trip = this->tracked_trips2[tripid];
 
-		for (auto i : old_map) {	
+		for (auto i : old_map) {
 			for (auto confirmed_stop : tracked_trip.confirmed_stops) {
-				if (confirmed_stop.first == i.first) {
+				if (confirmed_stop.stop_id == i.first) {
 					// train is confirmed to have skipped this stop.
 					LOG_TRIPSTATUS_DEBUG("NYCTFeedTracker: Confirmed skipped stop '%s'.\n", i.first.c_str());
 					return;
@@ -315,7 +315,19 @@ namespace nyctlib {
 					if (found_trip) {
 						LOG_FT_DEBUG("Trip '%s' at stop '%s' as per schedule.\n",
 							trip->nyct_train_id.c_str(), stop_id.c_str());
-						tracked.confirmed_stops.push_back(std::make_pair(stop_id, vu->timestamp));
+						SubwayTrackedTrip::ConfirmedStop confirmed_stop;
+						confirmed_stop.stop_id = stop_id;
+						confirmed_stop.timestamp = vu->timestamp;
+
+						auto track_id_actual = found_trip->actual_track;
+						auto track_id_scheduled = found_trip->scheduled_track;
+						if (track_id_actual.length()) {
+							confirmed_stop.arrival_track = track_id_actual;
+						} else {
+							confirmed_stop.arrival_track = track_id_scheduled;
+						}
+
+						tracked.confirmed_stops.push_back(confirmed_stop);
 					} else {
 					}
 				}
@@ -336,7 +348,7 @@ namespace nyctlib {
 				if (!found_trip) {
 					LOG_FT_WARN(CH_YELLOW "Trip '%s' is %s stop '%s' (#%d), was not on the original schedule.\n" CRESET,
 						trip->nyct_train_id.c_str(), getStopProgressString(current_stop_progress), vu->stop_id.c_str(), vu->current_stop_index);
-					tracked.confirmed_stops.push_back(std::make_pair(stop_id, vu->timestamp));
+					tracked.confirmed_stops.push_back({ stop_id, vu->timestamp });
 				}
 
 				if (tracked_trip.current_stop_index != vu->current_stop_index ||
