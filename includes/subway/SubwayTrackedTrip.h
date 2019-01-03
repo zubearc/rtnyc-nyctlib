@@ -20,6 +20,9 @@ namespace nyctlib {
 
 		std::vector<std::pair<std::string, long long>> confirmed_stops;
 
+		// GTFS "Trip IDs" associated with this trip. Used only for archival purposes.
+		std::vector<std::pair<std::string, long long>> gtfs_trip_paths;
+
 		// These are unsafe operations and should *only* be used temporarily while this object is in scope
 
 		inline NYCTTripTimeUpdate* isStopScheduledInitially(std::string stop_id, int offset = 0) {

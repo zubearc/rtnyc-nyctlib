@@ -368,6 +368,7 @@ namespace nyctlib {
 		currentFeed->forEachTripUpdate([&](const NYCTTripUpdate &tu) {
 			const NYCTTrip *trip = (NYCTTrip*)tu.trip.get();
 			std::string trainid = trip->nyct_train_id;
+			std::string gtfstripid = trip->trip_id;
 
 			if (!trip->nyct_is_assigned && tu.stop_time_updates.size() == 0) {
 				LOG_FT_INFO("NYCTTrainTracker: " CPURPLE "Not tracking an unassigned trip with no stop time updates with ID '%s'.\n" CRESET, trainid.c_str());
@@ -426,6 +427,7 @@ namespace nyctlib {
 						this->queueEvent(event);
 					}
 					tracked_trip.last_tracked_trip = NYCTTripUpdate(tu);
+					tracked_trip.gtfs_trip_paths.push_back(std::make_pair(gtfstripid, tu.timestamp));
 				} else {
 					tracked_trip.old_tracked_trip = tracked_trip.last_tracked_trip;
 
@@ -460,6 +462,18 @@ namespace nyctlib {
 						}
 					} else if (oldtrip->nyct_is_assigned && !trip->nyct_is_assigned) {
 						LOG_FT_WARN("NYCTTrainTracker: " CH_MAGENTA "Trip id '%s' is now unassigned?!\n" CRESET, trainid.c_str());
+					}
+
+					if (oldtrip->trip_id != trip->trip_id) {
+						LOG_FT_WARN("NYCTrainTracker: " CH_MAGENTA "Trip ID '%s' had path change from '%s' to '%s'\n" CRESET,
+							trainid.c_str(), oldtrip->trip_id.c_str(), trip->trip_id.c_str());
+						tracked_trip.gtfs_trip_paths.push_back(std::make_pair(gtfstripid, tu.timestamp));
+						SubwayTripEvent event;
+						event.event_category = SubwayTripEvent::RouteChange;
+						event.initial_tracked_trip = &tracked_trip;
+						event.trip_id = trainid;
+						event.trip_update = NYCTTripUpdate(tu);
+						this->queueEvent(event);
 					}
 
 					this->processTripTimeUpdates(trainid, tracked_trip.last_tracked_trip.stop_time_updates, 

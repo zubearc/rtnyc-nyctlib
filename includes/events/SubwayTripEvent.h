@@ -17,6 +17,7 @@ namespace nyctlib {
 			TripUnassigned,
 			LostTrip, // lost track of a trip
 			TripComplete,
+			RouteChange // GTFS trip_id changes (contains trip path)
 		};
 
 		// Should all point to member temporary variables and not need to be freed.
