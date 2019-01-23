@@ -52,7 +52,7 @@ else()
 		set(NYCTLIB_EXECUTABLE_SOURCES ${NYCTLIB_EXECUTABLE_SOURCES} "sources/interfaces/WSInterface.cpp")
 		set(NYCTLIB_EXECUTABLE_SOURCES ${NYCTLIB_EXECUTABLE_SOURCES} "sources/interfaces/NYCTSubwayInterface.cpp")
 		set(NYCTLIB_EXECUTABLE_SOURCES ${NYCTLIB_EXECUTABLE_SOURCES} "sources/interfaces/NYCBusInterface.cpp")
-
+		set(NYCTLIB_EXECUTABLE_SOURCES ${NYCTLIB_EXECUTABLE_SOURCES} "sources/interfaces/SessInterface.cpp")
 	endif()
 
 	# Add source to this project's executable.

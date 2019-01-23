@@ -7,6 +7,7 @@
 #include "subway/SubwayTrackedTrip.h"
 #ifndef NO_INTERFACES
 #include "events/EventHolder.h"
+#include "interfaces/SessInterface.h"
 #endif
 #include "events/SubwayTripEvent.h"
 
@@ -67,6 +68,8 @@ namespace nyctlib {
 		inline void kill() {
 			active = false;
 		}
+
+		void saveTrip(std::string tripid, SubwayTrackedTrip *trip);
 
 		inline INYCTFeedService* getFeedService() {
 			return feed.get();

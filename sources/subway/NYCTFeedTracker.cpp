@@ -5,7 +5,62 @@
 #include "TimeUtil.h"
 
 namespace nyctlib {
+
+	void NYCTFeedTracker::saveTrip(std::string tripid, SubwayTrackedTrip *tracked) {
+#ifndef NO_INTERFACES
+		assert(tracked->last_tracked_trip);
+		//assert(tracked->initial_trip_schedule.size()); // This can get hit by an UNASSIGNED trip
+
+		if (!tracked->last_tracked_trip) {
+			LOG_FT_DEBUG("NYCTFeedTracker: saveTrip: Cannot save trip '%s' because it has no last tracked trip data\n", tripid.c_str());
+			return;
+		} else if (!tracked->initial_trip_schedule.size()) {
+			LOG_FT_DEBUG("NYCTFeedTracker: saveTrip: Cannot save trip '%s' because it has no initial trip schedule data\n", tripid.c_str());
+			return;
+		}
+
+		auto nyct_trip_id = tripid;
+		auto timestamp = tracked->last_update_time;
+		auto its = tracked->initial_trip_schedule;
+		auto ltt = (NYCTTrip*)tracked->last_tracked_trip.trip.get();
+		auto direction = ltt->nyct_direction;
+		int first_stop_time = 0;
+		if (its.size()) {
+			first_stop_time = its[0].arrival_time;
+			if (!first_stop_time)
+				first_stop_time = its[0].depature_time;
+		}
+
+		std::map<std::string, std::vector<SubwayTrackedTrip::ConfirmedStop>> m;
+
+		int paths_count = tracked->gtfs_trip_paths.size();
+		for (int i = 0; i < paths_count; i++) {
+			auto path = tracked->gtfs_trip_paths[i];
+			auto path_str = path.first;
+			auto path_ts = path.second;
+			auto next_path_ts = INT_MAX;
+			if ((i + 1) < paths_count) {
+				next_path_ts = tracked->gtfs_trip_paths[i + 1].second;
+			}
+			
+			for (auto confirmed_stop : tracked->confirmed_stops) {
+				if (confirmed_stop.timestamp >= path_ts) {
+					if (confirmed_stop.timestamp < next_path_ts) {
+						m[path_str].push_back(confirmed_stop);
+						continue;
+					}
+					break;
+				}
+				continue;
+			}
+		}
+
+		SessInterface::commit(nyct_trip_id, last_update_time, 0, m);
+#endif
+	}
+
 	void NYCTFeedTracker::clearTrackedDataForTrip(std::string tripid) {
+		this->saveTrip(tripid, &this->tracked_trips2[tripid]);
 		this->tracked_trips2.erase(tripid);
 		SubwayTripEvent event;
 		event.trip_id = tripid;
@@ -240,6 +295,15 @@ namespace nyctlib {
 		return 0;
 	}
 
+#define PUSH_CONFIRMED_STOP(confirmed_stop) \
+	if (tracked.confirmed_stops.size()) { \
+		if (tracked.confirmed_stops[tracked.confirmed_stops.size() - 1].timestamp != confirmed_stop.timestamp) { \
+				tracked.confirmed_stops.push_back(confirmed_stop); \
+		} \
+	} else { \
+		tracked.confirmed_stops.push_back(confirmed_stop); \
+	}
+
 	bool NYCTFeedTracker::update() {
 		feed->update();
 
@@ -327,7 +391,7 @@ namespace nyctlib {
 							confirmed_stop.arrival_track = track_id_scheduled;
 						}
 
-						tracked.confirmed_stops.push_back(confirmed_stop);
+						PUSH_CONFIRMED_STOP(confirmed_stop);
 					} else {
 					}
 				}
@@ -348,7 +412,8 @@ namespace nyctlib {
 				if (!found_trip) {
 					LOG_FT_WARN(CH_YELLOW "Trip '%s' is %s stop '%s' (#%d), was not on the original schedule.\n" CRESET,
 						trip->nyct_train_id.c_str(), getStopProgressString(current_stop_progress), vu->stop_id.c_str(), vu->current_stop_index);
-					tracked.confirmed_stops.push_back({ stop_id, vu->timestamp });
+					SubwayTrackedTrip::ConfirmedStop cs{ stop_id, vu->timestamp };
+					PUSH_CONFIRMED_STOP(cs);
 				}
 
 				if (tracked_trip.current_stop_index != vu->current_stop_index ||
