@@ -264,13 +264,23 @@ namespace nyctlib {
 		flatbuffers::FlatBufferBuilder builder(1024);
 		
 		std::vector<flatbuffers::Offset<nyc::realtime::NYCSubwaySchedule>> schedules;
-		e.initial_tracked_trip->last_tracked_vehicle.stop_id;
+		auto last_stop_id = e.initial_tracked_trip->last_tracked_vehicle.stop_id;
+		auto _last_stop_id = builder.CreateString(last_stop_id);
+		std::string on_track;
 		for (auto &stu : tu.stop_time_updates) {
 			auto s = (NYCTTripTimeUpdate*)stu.get();
 
 			auto _scheduled_track = builder.CreateString(s->scheduled_track);
 			auto _actual_track = builder.CreateString(s->actual_track);
 			auto _stop_id = builder.CreateString(s->stop_id);
+
+			if (last_stop_id.length() && s->stop_id == last_stop_id) {
+				if (s->actual_track.length()) {
+					on_track = s->actual_track;
+				} else {
+					on_track = s->scheduled_track;
+				}
+			}
 
 			nyc::realtime::NYCSubwayScheduleBuilder schedule_buffer(builder);
 			schedule_buffer.add_scheduled_track(_scheduled_track);
@@ -285,10 +295,14 @@ namespace nyctlib {
 
 		auto trip_buf = buildTrip(builder, trip);
 
+		auto _on_track = builder.CreateString(on_track);
+
 		nyc::realtime::NYCSubwayScheduleUpdateBuilder schedule_update_builder(builder);
 		schedule_update_builder.add_trip(trip_buf);
 		schedule_update_builder.add_schedule(schedules_buf);
 		schedule_update_builder.add_timestamp((int)tu.timestamp);
+		schedule_update_builder.add_current_stop_id(_last_stop_id);
+		schedule_update_builder.add_current_track(_on_track);
 		auto off = schedule_update_builder.Finish();
 
 		builder.Finish(off);
