@@ -64,6 +64,8 @@ int main(int argc, char *argv[])
 			("http://datamine.mta.info/mta_esi.php?key=" + apikey_str + "&feed_id=2"));
 		INYCTFeedServicePtr feedServiceBDFM = std::make_unique<DynamicNYCTFeedService>(
 			("http://datamine.mta.info/mta_esi.php?key=" + apikey_str + "&feed_id=21"));
+		INYCTFeedServicePtr feedServiceACE = std::make_unique<DynamicNYCTFeedService>(
+			("http://datamine.mta.info/mta_esi.php?key=" + apikey_str + "&feed_id=26"));
 
 		std::unique_ptr<IFeedService<GtfsFeedParser>> busTUFeedParser = std::make_unique<DynamicBusFeedService>(
 			"http://gtfsrt.prod.obanyc.com/tripUpdates?key=");
@@ -83,6 +85,7 @@ int main(int argc, char *argv[])
 		NYCTFeedTracker nyctFeedTracker123456(feedService123456, event_holder);
 		NYCTFeedTracker nyctFeedTrackerBDFM(feedServiceBDFM, event_holder);
 		NYCTFeedTracker nyctFeedTrackerL(feedServiceL, event_holder);
+		NYCTFeedTracker nyctFeedTrackerACE(feedServiceACE, event_holder);
 
 		NYCBusTracker nycBusTracker(busTUFeedParser, busVUFeedParser, bus_event_holder);
 
@@ -105,6 +108,10 @@ int main(int argc, char *argv[])
 			//nyctFeedTrackerL.run();
 		});
 
+		auto tracker_runningACE = std::thread([&]() {
+			//nyctFeedTrackerACE.run();
+		});
+
 		auto tracker_runningBUS = std::thread([&]() {
 			//nycBusTracker.run();
 		});
@@ -112,6 +119,7 @@ int main(int argc, char *argv[])
 		tracker_running123456.detach();
 		tracker_runningBDFM.detach();
 		tracker_runningL.detach();
+		tracker_runningACE.detach();
 		tracker_runningBUS.detach();
 		WSInterface wsi;
 		auto subway_ws_interface = NYCTSubwayInterface(&wsi, { &nyctFeedTracker123456, &nyctFeedTrackerBDFM, &nyctFeedTrackerL }, event_holder);
@@ -127,7 +135,7 @@ int main(int argc, char *argv[])
 			//bus_ws_interface.run();
 		});
 
-		std::this_thread::sleep_for(std::chrono::seconds(4000));
+		std::this_thread::sleep_for(std::chrono::seconds(14000));
 
 		//Sleep(6400);
 		//nyctFeedTracker.printTripsScheduledToArriveAtStop("633S");
