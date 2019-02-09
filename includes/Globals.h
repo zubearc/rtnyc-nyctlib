@@ -35,10 +35,14 @@ extern FILE *g_logging_output_pointer;
 #define SLEEP(x) usleep(x * 1000)
 #endif
 
-#ifndef min
-// min,max functions -- defined in Windows.h on win32
-#define min(a,b) (((a)<(b))?(a):(b))
-#endif
-#ifndef max
-#define max(a,b) (((a)>(b))?(a):(b))
-#endif
+// Remove below due to issues on GCC where min/max macros conflict with stl
+// #ifndef min
+// // min,max functions -- defined in Windows.h on win32
+// #define min(a,b) (((a)<(b))?(a):(b))
+// #endif
+// #ifndef max
+// #define max(a,b) (((a)>(b))?(a):(b))
+// #endif
+
+#define MIN(a,b) (((a)<(b))?(a):(b))
+#define MAX(a,b) (((a)>(b))?(a):(b))

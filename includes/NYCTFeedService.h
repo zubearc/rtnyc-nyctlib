@@ -1,7 +1,7 @@
 #pragma once
 
-#include "gtfs/NYCTFeedParser.h"
 #include "Globals.h"
+#include "gtfs/NYCTFeedParser.h"
 #include "IFeedService.h"
 
 namespace nyctlib {

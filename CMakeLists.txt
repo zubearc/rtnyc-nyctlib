@@ -36,7 +36,7 @@ else()
 	find_package(CURL REQUIRED)
 	find_package(ZLIB REQUIRED)
 	find_package(OpenSSL REQUIRED)
-	find_package(flatbuffers REQUIRED)
+	find_package(Flatbuffers REQUIRED)
 
 	message("CURL install dir is ${CURL_INCLUDE_DIR}")
 

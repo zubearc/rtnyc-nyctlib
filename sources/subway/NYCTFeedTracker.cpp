@@ -646,8 +646,8 @@ namespace nyctlib {
 			auto next_update = this->last_update_time + 24;
 			long long timenow = time(NULL);
 			auto sleep_for_seconds = next_update - timenow;
-			sleep_for_seconds = max(1, sleep_for_seconds);
-			sleep_for_seconds = min(15, sleep_for_seconds);
+			sleep_for_seconds = MAX(1, sleep_for_seconds);
+			sleep_for_seconds = MIN(15, sleep_for_seconds);
 			// above is range function to ensure seconds is in [1,15]
 
 			// MTA updates their feeds every 15 seconds, we check back the data every 24 seconds

@@ -4,9 +4,6 @@
 
 #define LOG_TRACE printf
 
-#define min(a,b) (((a)<(b))?(a):(b))
-#define max(a,b) (((a)>(b))?(a):(b))
-
 namespace nyctlib {
 	void NYCBusTracker::clearTrackedDataForVehicle(std::string vehid) {
 		this->tracked_trips.erase(vehid);
@@ -209,9 +206,9 @@ namespace nyctlib {
 			this->tu_feed_updated_time = tuFeed->getFeedTime();
 
 		if (vu_feed_updated_time > 0 && tu_feed_updated_time > 0) {
-			this->lastUpdatedTime = min(vu_feed_updated_time, tu_feed_updated_time);
+			this->lastUpdatedTime = MIN(vu_feed_updated_time, tu_feed_updated_time);
 		} else {
-			this->lastUpdatedTime = max(vu_feed_updated_time, tu_feed_updated_time);
+			this->lastUpdatedTime = MAX(vu_feed_updated_time, tu_feed_updated_time);
 		}
 		
 		return true;
@@ -231,8 +228,8 @@ namespace nyctlib {
 			auto next_update = this->lastUpdatedTime + 24;
 			long long timenow = time(NULL);
 			auto sleep_for_seconds = next_update - timenow;
-			sleep_for_seconds = max(1, sleep_for_seconds);
-			sleep_for_seconds = min(15, sleep_for_seconds);
+			sleep_for_seconds = MAX(1, sleep_for_seconds);
+			sleep_for_seconds = MIN(15, sleep_for_seconds);
 			// above is range function to ensure seconds is in [1,15]
 
 			// MTA updates their feeds every 15 seconds, we check back the data every 24 seconds

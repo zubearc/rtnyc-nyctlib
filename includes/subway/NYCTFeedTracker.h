@@ -2,6 +2,7 @@
 
 #include <thread>
 #include <atomic>
+
 #include "NYCTFeedService.h"
 #include "Globals.h"
 #include "subway/SubwayTrackedTrip.h"
