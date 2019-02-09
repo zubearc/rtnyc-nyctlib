@@ -41,7 +41,7 @@ namespace nyctlib {
 				trip_stop_buffer.add_arrival_track(_arrival_track);
 				trip_stop_buffer.add_stop_sequence(confirmed_stop.stop_sequence);
 				trip_stop_buffer.add_confidence(1);
-				trip_stop_buffer.add_on(confirmed_stop.timestamp);
+				trip_stop_buffer.add_on(timestamp - confirmed_stop.timestamp);
 				auto tsb = trip_stop_buffer.Finish();
 				confirmed_stops.push_back(tsb);
 			}
