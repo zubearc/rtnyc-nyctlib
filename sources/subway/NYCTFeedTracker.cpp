@@ -4,6 +4,8 @@
 #include "Logging.h"
 #include "TimeUtil.h"
 
+#define SCHEDULE_CHANGE_GRACE_SECONDS 15
+
 namespace nyctlib {
 
 	void NYCTFeedTracker::saveTrip(std::string tripid, SubwayTrackedTrip *tracked) {
@@ -104,8 +106,9 @@ namespace nyctlib {
 		for (auto i : current_map) {
 			auto lT = old_map[i.first];
 			if (lT == nullptr) {
-				LOG_TRIPSTATUS_DEBUG("NEWDATA for stop %s\n", i.first.c_str());
+				LOG_TRIPSTATUS_DEBUG("NEWDATA for stop %s: ", i.first.c_str());
 				printTripTimeData(*i.second);
+				LOG_RAW_DEBUG("\n");
 				old_map.erase(i.first); // C++ creates elements with the [] operator, erase these.
 										// We could do a .find() but since it is relatively rare for this block of code
 										// to be called, it's probably more efficient to simply remove it here instead
@@ -179,7 +182,23 @@ namespace nyctlib {
 			old_map.erase(i.first);
 		}
 
+		bool should_print_first_tripupdate_diff = false;
+
+		std::stringstream trip_arrivals_string;
+		std::stringstream trip_depatures_string;
+		std::stringstream trip_cumulative_string;
+
+		bool significant = false;
+
 		if (all_delta_arrival_time < INT_MAX || all_delta_depature_time < INT_MAX) {
+			// Because schedule changes are so common, we don't bother broadcasting
+			// schedule changes less than defined SCHEDULE_CHANGE_GRACE_SECONDS.
+			// Scrap the above. This causes too much odd issues for clients getting out of sync.
+			if (abs(all_delta_arrival_time) > SCHEDULE_CHANGE_GRACE_SECONDS || 
+				abs(all_delta_depature_time) > SCHEDULE_CHANGE_GRACE_SECONDS) {
+				significant = true;
+			}
+
 			std::vector<NYCTTripTimeUpdate> newttus;
 			for (auto stu : tu->stop_time_updates) {
 				auto ttu = (NYCTTripTimeUpdate*)stu.get();
@@ -198,30 +217,36 @@ namespace nyctlib {
 			this->queueEvent(event);
 		}
 
-		bool should_print_first_tripupdate_diff = false;
+		auto hcolor = CH_YELLOW;
+		auto color = CYELLOW;
 
-		std::stringstream trip_arrivals_string;
-		std::stringstream trip_depatures_string;
-		std::stringstream trip_cumulative_string;
+		if (!significant) {
+			hcolor = CWHITE;
+			color = CRESET;
+		}
 
 		if (all_delta_arrival_time == INT_MAX) {
 			//there was no difference in data (this is ok)
 			//printf("NYCTFeedTracker: No stop arrival time updates for trip?\n");
 		} else if (all_delta_arrival_time != INT_MIN) {
 			this->tracked_trips2[tripid].cumulative_arrival_delay += all_delta_arrival_time;
+			
 			if (all_delta_arrival_time > 0)
-				trip_arrivals_string << CH_YELLOW "Trip arrivals are now " << all_delta_arrival_time << " seconds delayed. " CRESET;
+				trip_arrivals_string << hcolor << "Trip arrivals are now " << all_delta_arrival_time << " seconds delayed. " CRESET;
 			else if (all_delta_arrival_time < 0)
-				trip_arrivals_string << CYELLOW "Trip arrivals are now " << -all_delta_arrival_time << " seconds early. " CRESET;
+				trip_arrivals_string << color << "Trip arrivals are now " << -all_delta_arrival_time << " seconds early. " CRESET;
+			
 			should_print_first_tripupdate_diff = true;
+			
 			auto cumulative_arrival_delay = this->tracked_trips2[tripid].cumulative_arrival_delay;
+			
 			if (cumulative_arrival_delay != all_delta_arrival_time) {
-				trip_cumulative_string << CH_YELLOW "Cumulative arrival delay for trip is now " << cumulative_arrival_delay << "  seconds. " CRESET;
+				trip_cumulative_string << "Cumulative arrival delay for trip is now " << cumulative_arrival_delay << "  seconds. " CRESET;
 			}
 		} else /* all_delta_arrival_time == INT_MIN */ {
 			this->tracked_trips2[tripid].cumulative_arrival_delay += first_arrival_diff_if_schedule_change;
 			auto cumdiff = this->tracked_trips2[tripid].cumulative_arrival_delay;
-			trip_cumulative_string << CH_YELLOW "Trip encountered a arrival schedule change, only accounting for first difference - Cumulative arrival delay for trip is now " << cumdiff << "  seconds. " CRESET;
+			trip_cumulative_string << hcolor << "Trip encountered a arrival schedule change, only accounting for first difference - Cumulative arrival delay for trip is now " << cumdiff << "  seconds. " CRESET;
 		}
 
 		if (all_delta_depature_time == INT_MAX) {
@@ -229,19 +254,19 @@ namespace nyctlib {
 		} else if (all_delta_depature_time != INT_MIN) {
 			this->tracked_trips2[tripid].cumulative_depature_delay += all_delta_depature_time;
 			if (all_delta_depature_time > 0)
-				trip_depatures_string << CH_YELLOW "Trip depatures are now " << all_delta_depature_time << " seconds delayed. " CRESET;
+				trip_depatures_string << hcolor << "Trip depatures are now " << all_delta_depature_time << " seconds delayed. " CRESET;
 			else if (all_delta_arrival_time < 0)
-				trip_depatures_string << CYELLOW "Trip depatures are now " << -all_delta_depature_time << " seconds early. " CRESET;
+				trip_depatures_string << color << "Trip depatures are now " << -all_delta_depature_time << " seconds early. " CRESET;
 			should_print_first_tripupdate_diff = true;
 
 			auto cumulative_depature_delay = this->tracked_trips2[tripid].cumulative_depature_delay;
 			if (cumulative_depature_delay != all_delta_depature_time) {
-				trip_cumulative_string << CH_YELLOW "Cumulative depature delay for trip is now " << cumulative_depature_delay << "  seconds. " CRESET;
+				trip_cumulative_string << "Cumulative depature delay for trip is now " << cumulative_depature_delay << "  seconds. " CRESET;
 			}
 		} else /* all_delta_depature_time == INT_MIN */ {
 			this->tracked_trips2[tripid].cumulative_depature_delay += first_depature_diff_if_schedule_change;
 			auto cumdiff = this->tracked_trips2[tripid].cumulative_depature_delay;
-			trip_cumulative_string << CH_YELLOW "Trip encountered a depature schedule change, only accounting for first difference - Cumulative depature delay for trip is now " << cumdiff << "  seconds. " CRESET;
+			trip_cumulative_string << CH_YELLOW << "Trip encountered a depature schedule change, only accounting for first difference - Cumulative depature delay for trip is now " << cumdiff << "  seconds. " CRESET;
 		}
 
 		// Below only gets called if all arrivals/depatures change by a fixed amount, so we only print
@@ -515,7 +540,6 @@ namespace nyctlib {
 						for (auto stu : tu.stop_time_updates) {
 							auto s = (NYCTTripTimeUpdate*)stu.get();
 							tracked_trip.initial_trip_schedule.push_back(NYCTTripTimeUpdate(*s));
-
 						}
 						SubwayTripEvent event;
 						event.event_category = SubwayTripEvent::ScheduleChange;
