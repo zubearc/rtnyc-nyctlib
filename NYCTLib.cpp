@@ -22,14 +22,48 @@
 #include <Windows.h>
 #endif
 
+#define DEFAULT_KILL_TIME 14000
+
 int g_logging_level = LogWarn | LogInfo | LogDebug;
 FILE *g_logging_output_pointer = stdout;
 
 using namespace std;
 using namespace nyctlib;
 
-int main(int argc, char *argv[])
-{
+// adapted from https://gist.github.com/plasticbox/3708a6cdfbece8cd224487f9ca9794cd
+std::string getCLIOption(int argc, char* argv[], const std::string &option) {
+	std::string cmd;
+	for (int i = 0; i < argc; ++i) {
+		std::string arg = argv[i];
+		if (0 == arg.find(option)) {
+			if (argc > (i + 1)) {
+				return argv[i + 1];
+			}
+		}
+	}
+	return cmd;
+}
+
+bool hasCLIOption(int argc, char* argv[], const std::string &option) {
+	for (int i = 0; i < argc; ++i) {
+		std::string arg = argv[i];
+		if (0 == arg.find(option)) {
+			return true;
+		}
+	}
+	return false;
+}
+
+void printHelp() {
+	printf("NYCTLib\n");
+	printf("--subwayFeed <FeedId>    Track subway feed ID (refer to MTA docs datamine.mta.info/list-of-feeds)\n");
+	printf("--busFeed                Track citywide bus feed\n");
+	printf("--wsHost <HostName>      WSI bind hostname\n");
+	printf("--wsPort <Port>          WSI bind port (default: 7777)\n");
+	printf("--killTime <WaitSeconds> Seconds for process to wait before exiting\n");
+}
+
+int main(int argc, char *argv[]) {
 	cout << "Hello CMake." << endl;
 
 #ifdef _WIN32 // enable colors
@@ -50,14 +84,14 @@ int main(int argc, char *argv[])
 #endif
 	gtfsFeedParser.dumpOut();*/
 
+	auto apikey = getenv("MTA_NYCT_API_KEY");
+	if (apikey == NULL) {
+		fprintf(stderr, "fatal: must set MTA_NYCT_API_KEY enviornment var\n");
+		exit(1);
+	}
+	auto apikey_str = std::string(apikey);
+
 	if (argc == 1) {
-		auto apikey = getenv("MTA_NYCT_API_KEY");
-		if (apikey == NULL) {
-			fprintf(stderr, "fatal: must set MTA_NYCT_API_KEY enviornment var");
-			exit(1);
-		}
-		auto apikey_str = std::string(apikey);
-		
 		INYCTFeedServicePtr feedService123456 = std::make_unique<DynamicNYCTFeedService>(
 			("http://datamine.mta.info/mta_esi.php?key=" + apikey_str +  "&feed_id=1"));
 		INYCTFeedServicePtr feedServiceL = std::make_unique<DynamicNYCTFeedService>(
@@ -135,7 +169,7 @@ int main(int argc, char *argv[])
 			//bus_ws_interface.run();
 		});
 
-		std::this_thread::sleep_for(std::chrono::seconds(14000));
+		std::this_thread::sleep_for(std::chrono::seconds(DEFAULT_KILL_TIME));
 
 		//Sleep(6400);
 		//nyctFeedTracker.printTripsScheduledToArriveAtStop("633S");
@@ -145,11 +179,81 @@ int main(int argc, char *argv[])
 		//ferryFeedParser.loadFile("H:/Users/Extreme/Development/Projects/NYCT/DataArchives/gtfs_ferry_tripupdate.bin");
 //		nyctlib::GtfsFeedParser busFeedParser;
 //		busFeedParser.loadFile("H:/Users/Extreme/Development/Projects/NYCTBus/DataArchives/tripUpdates");
-	} else {
-		ConsoleInterface ci;
-		ci.run(argc, argv);
+	} else if (argc > 1) {
+
+		auto subwayFeedParam = getCLIOption(argc, argv, "--subwayFeed");
+		auto busFeedParam = hasCLIOption(argc, argv, "--busFeed");
+		auto hostParam = getCLIOption(argc, argv, "--wsHost");
+		auto portParam = getCLIOption(argc, argv, "--wsPort");
+		auto killTimeParam = getCLIOption(argc, argv, "--killTime");
+
+		std::string host = "";
+		int portNumber = 7777;
+
+		int killTime = DEFAULT_KILL_TIME;
+
+		if (hostParam.length()) {
+			host = hostParam;
+		}
+
+		if (portParam.length()) {
+			portNumber = std::stoi(portParam);
+		}
+
+		if (subwayFeedParam.length()) {
+			INYCTFeedServicePtr feedService = std::make_unique<DynamicNYCTFeedService>(
+				("http://datamine.mta.info/mta_esi.php?key=" + apikey_str + "&feed_id=" + subwayFeedParam));
+
+			auto event_holder = std::make_shared<BlockingEventHolder<SubwayTripEvent>>();
+			NYCTFeedTracker nyctFeedTracker(feedService, event_holder);
+
+			auto tracker_running = std::thread([&]() {
+				nyctFeedTracker.run();
+			});
+
+			tracker_running.detach();
+
+			WSInterface wsi;
+			auto subway_ws_interface = NYCTSubwayInterface(&wsi, { &nyctFeedTracker }, event_holder);
+			auto ws_listening_thread = std::thread([&] {
+				wsi.start(host, portNumber);
+			});
+
+			auto event_handling_thread = std::thread([&] {
+				subway_ws_interface.run();
+			});
+
+
+			std::this_thread::sleep_for(std::chrono::seconds(killTime));
+		} else if (busFeedParam) {
+			std::unique_ptr<IFeedService<GtfsFeedParser>> busTUFeedParser = std::make_unique<DynamicBusFeedService>(
+				"http://gtfsrt.prod.obanyc.com/tripUpdates?key=");
+
+			std::unique_ptr<IFeedService<GtfsFeedParser>> busVUFeedParser = std::make_unique<DynamicBusFeedService>(
+				"http://gtfsrt.prod.obanyc.com/vehiclePositions?key=");
+
+			auto bus_event_holder = std::make_shared<BlockingEventHolder<NYCBusTripEvent>>();
+
+			NYCBusTracker nycBusTracker(busTUFeedParser, busVUFeedParser, bus_event_holder);
+
+			auto tracker_runningBUS = std::thread([&]() {
+				nycBusTracker.run();
+			});
+
+			tracker_runningBUS.detach();
+
+			WSInterface wsi;
+			auto bus_ws_interface = NYCBusInterface(&wsi, { &nycBusTracker }, bus_event_holder);
+
+			std::this_thread::sleep_for(std::chrono::seconds(killTime));
+		} else {
+			printf("unknown command: %s\n", argv[1]);
+			printHelp();
+			exit(1);
+		}
 	}
 
+	printf("Done.\n");
 	system("pause");
 	return 0;
 }
