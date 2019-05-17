@@ -83,7 +83,11 @@ namespace nyctlib {
 		std::map<std::string /* stop id */, NYCTTripTimeUpdate*> old_map;
 		std::map<std::string /* stop id */, NYCTTripTimeUpdate*> current_map;
 
-		_ASSERT(current.size());
+		//_ASSERT(current.size());
+
+		if (!current.size()) {
+			return; // got an empty schedule, ignore.
+		}
 
 		for (auto &i : old) {
 			auto lT = (NYCTTripTimeUpdate*)i.get();
@@ -131,8 +135,8 @@ namespace nyctlib {
 						all_delta_arrival_time = (int)arrival_diff;
 					} else if (all_delta_arrival_time != arrival_diff) {
 						all_delta_arrival_time = INT_MIN;
-						must_print_diffs = 0xC0fee;
-						LOG_TRIPSTATUS_WARN(CH_MAGENTA "Trip encountered schedule change starting from arrival for stop '%s'.\n" CRESET, i.first.c_str());
+						//must_print_diffs = 0xC0fee;
+						//LOG_TRIPSTATUS_WARN(CH_MAGENTA "Trip encountered schedule change starting from arrival for stop '%s'.\n" CRESET, i.first.c_str());
 						//RAISE_EVENT()
 						first_arrival_diff_if_schedule_change = (int)arrival_diff;
 					}
@@ -388,6 +392,7 @@ namespace nyctlib {
 						if (tripid == trainid) {
 							if (tu.stop_time_updates.size() > 0) {
 								stop_id = tu.stop_time_updates[0]->stop_id;
+								vu->stop_id = stop_id;
 								LOG_FT_DEBUG("Assumed VU stop_id from latest TU stop time update for trip '%s': %s\n", tripid.c_str(), stop_id.c_str());
 								return;
 							}
