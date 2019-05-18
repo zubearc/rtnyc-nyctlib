@@ -423,6 +423,18 @@ namespace nyctlib {
 								vu->stop_id = stop_id;
 								LOG_FT_DEBUG("Assumed VU stop_id from latest TU stop time update for trip '%s': %s\n", tripid.c_str(), stop_id.c_str());
 								return;
+							} else {
+								auto gtfstripid = vu->trip->trip_id;
+								if (gtfstripid.length()) {
+									auto found = gtfstripid.rfind(".");
+									if (found != std::string::npos) {
+										auto assumed_direction = gtfstripid[found + 1];
+										stop_id = vu->stop_id + assumed_direction;
+										vu->stop_id = stop_id;
+										LOG_FT_DEBUG("Assumed VU stop_id from trip path for '%s': %s\n", tripid.c_str(), stop_id.c_str());
+										return;
+									}
+								}
 							}
 							return;
 						}
@@ -430,6 +442,10 @@ namespace nyctlib {
 				} else {
 					stop_id = vu->stop_id;
 				}
+
+				if (!stop_id.length()) stop_id = vu->stop_id;
+
+				_ASSERT(stop_id.length());
 
 				auto found_trip = tracked.isStopScheduled(stop_id);
 				
