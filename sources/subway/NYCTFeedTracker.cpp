@@ -391,11 +391,40 @@ namespace nyctlib {
 						std::string trainid = trip->nyct_train_id;
 						if (tripid == trainid) {
 							if (tu.stop_time_updates.size() > 0) {
-								stop_id = tu.stop_time_updates[0]->stop_id;
+								stop_id = tu.stop_time_updates[1]->stop_id;
 								vu->stop_id = stop_id;
 								LOG_FT_DEBUG("Assumed VU stop_id from latest TU stop time update for trip '%s': %s\n", tripid.c_str(), stop_id.c_str());
 								return;
 							}
+						}
+					});
+				} else if (vu->stop_id.size() == 3) {
+					// MTA finally provides stop IDs, but these are 3 char ones
+					// and not 4 char ones like the rest of the lines. SIGH.
+					// Patch below.
+					currentFeed->forEachTripUpdate([&](const NYCTTripUpdate &tu) {
+						const NYCTTrip *trip = (NYCTTrip*)tu.trip.get();
+						std::string trainid = trip->nyct_train_id;
+						if (tripid == trainid) {
+							if (tu.stop_time_updates.size() > 0) {
+								for (auto _stu : tu.stop_time_updates) {
+									auto _stopid = _stu->stop_id;
+									if (vu->stop_id[0] == _stopid[0] &&
+										vu->stop_id[1] == _stopid[1] &&
+										vu->stop_id[2] == _stopid[2]) {
+										stop_id = _stopid;
+										vu->stop_id = stop_id;
+										LOG_FT_DEBUG("Fixed VU stop_id from latest TU stop time update for trip '%s': %s\n", tripid.c_str(), stop_id.c_str());
+										return;
+									}
+								}
+								auto assumed_direction = tu.stop_time_updates[0]->stop_id[3];
+								stop_id = vu->stop_id + assumed_direction;
+								vu->stop_id = stop_id;
+								LOG_FT_DEBUG("Assumed VU stop_id from latest TU stop time update for trip '%s': %s\n", tripid.c_str(), stop_id.c_str());
+								return;
+							}
+							return;
 						}
 					});
 				} else {
