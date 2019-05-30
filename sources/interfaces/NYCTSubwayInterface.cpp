@@ -256,17 +256,30 @@ namespace nyctlib {
 		return trip_buffer.Finish();
 	}
 
+	flatbuffers::Offset<nyc::realtime::NYCSubwayVehiclePosition> buildVehiclePosition(flatbuffers::FlatBufferBuilder &builder, NYCTVehicleUpdate &vu, std::string tkid = "") {
+		auto _stop_id = builder.CreateString(vu.stop_id);
+		auto _track_id = builder.CreateString(tkid);
+		
+		nyc::realtime::NYCSubwayVehiclePositionBuilder vpos_buffer(builder);
+		nyc::realtime::TripStatus ts = *(nyc::realtime::TripStatus*)&vu.stop_progress;
+		vpos_buffer.add_relative_status(ts);
+		vpos_buffer.add_stop_id(_stop_id);
+		vpos_buffer.add_stop_index(vu.current_stop_index);
+		vpos_buffer.add_track(_track_id);
+		return vpos_buffer.Finish();
+	}
+
 	void NYCTSubwayInterface::fBuildTripScheduleUpdate(SubwayTripEvent &e, unsigned char* &message, int &message_len) {
 		auto tu = e.trip_update;
 		NYCTTrip *trip = (NYCTTrip*)tu.trip.get();
-
+		auto vehicle = e.initial_tracked_trip->last_tracked_vehicle;
 		
 		flatbuffers::FlatBufferBuilder builder(1024);
 		
 		std::vector<flatbuffers::Offset<nyc::realtime::NYCSubwaySchedule>> schedules;
-		auto last_stop_id = e.initial_tracked_trip->last_tracked_vehicle.stop_id;
-		auto _last_stop_id = builder.CreateString(last_stop_id);
+		auto last_stop_id = vehicle.stop_id;
 		std::string on_track;
+		
 		for (auto &stu : tu.stop_time_updates) {
 			auto s = (NYCTTripTimeUpdate*)stu.get();
 
@@ -295,14 +308,13 @@ namespace nyctlib {
 
 		auto trip_buf = buildTrip(builder, trip);
 
-		auto _on_track = builder.CreateString(on_track);
+		auto vehicle_position = buildVehiclePosition(builder, vehicle, on_track);
 
 		nyc::realtime::NYCSubwayScheduleUpdateBuilder schedule_update_builder(builder);
 		schedule_update_builder.add_trip(trip_buf);
 		schedule_update_builder.add_schedule(schedules_buf);
-		schedule_update_builder.add_timestamp((int)tu.timestamp);
-		schedule_update_builder.add_current_stop_id(_last_stop_id);
-		schedule_update_builder.add_current_track(_on_track);
+			schedule_update_builder.add_timestamp((int)tu.timestamp);
+		schedule_update_builder.add_last_vehicle_position(vehicle_position);
 		auto off = schedule_update_builder.Finish();
 
 		builder.Finish(off);
