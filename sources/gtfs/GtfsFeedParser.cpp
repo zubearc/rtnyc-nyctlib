@@ -184,7 +184,7 @@ namespace nyctlib {
 		if (!input) {
 			std::cout << filename << ": File not found." << std::endl;
 		} else if (!feedMessage.ParseFromIstream(&input)) {
-			std::cerr << "Failed to parse protocol buffer, is it valid?" << std::endl;
+			std::cerr << "Failed to parse protocol buffer, is it valid?" << feedMessage.InitializationErrorString() << std::endl;
 			return false;
 		}
 

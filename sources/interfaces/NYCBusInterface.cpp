@@ -244,12 +244,48 @@ namespace nyctlib {
 		message_len = size;
 		return;
 	}
+
+	json11::Json jBuildTripCompleteUpdate(NYCBusTripEvent &e) {
+		auto tid = e.trip_id;
+
+		Json::object json;
+		json["VehicleID"] = tid;
+		json11::Json j(json);
+		return j;
+	}
+
+	void fBuildTripCompleteUpdate(NYCBusTripEvent &e, unsigned char* &message, int &message_len) {
+		flatbuffers::FlatBufferBuilder builder(1024);
+
+		auto _trip_id = builder.CreateString(e.trip_id);
+
+		nyc::realtime::NYCBusTripCompleteBuilder trip_complete_builder(builder);
+		trip_complete_builder.add_vehicle_id(_trip_id);
+
+		auto off = trip_complete_builder.Finish();
+
+		builder.Finish(off);
+
+		auto fbuffer = builder.GetBufferPointer();
+		auto size = builder.GetSize();
+		auto buffer = new unsigned char[size];
+
+		/*std::string sbuf((char*)fbuffer, size);
+		printf("\n%d BYTES BEFORE: ", size);
+		std::cout << Andromeda::string_to_hex(sbuf) << std::endl;*/
+
+		memcpy(buffer, fbuffer, size);
+
+		message = buffer;
+		message_len = size;
+		return;
+	}
 	
 	void NYCBusInterface::run() {
 		running = true;
 		while (running) {
-			NYCBusTripEvent tracked_trip[32];
-			auto count = holder->queue.wait_dequeue_bulk(tracked_trip, 32);
+			NYCBusTripEvent tracked_trip[256];
+			auto count = holder->queue.wait_dequeue_bulk(tracked_trip, 128);
 
 			if (wsInterface->has_json_clients > 0) {
 				std::vector<std::pair<std::string /* command */, json11::Json>> data;
@@ -267,6 +303,9 @@ namespace nyctlib {
 						break;
 					case NYCBusTripEvent::ScheduleChange:
 						//data.push_back(std::make_pair("ScheduleChange", jBuildTripScheduleUpdate(trip)));
+						break;
+					case NYCBusTripEvent::TripComplete:
+						data.push_back(std::make_pair("TripComplete", jBuildTripCompleteUpdate(trip)));
 						break;
 					default:
 						printf("Ignoring unknown event\n");
@@ -312,7 +351,17 @@ namespace nyctlib {
 						fBuildTripScheduleUpdate(trip, buffer, buffer_len);
 						assert(buffer != nullptr);
 						printf("Buffer ptr: %d", buffer);
-						messages.push_back({ WSInterface::NYCBus_ScheduleChange, buffer, buffer_len });
+						//messages.push_back({ WSInterface::NYCBus_ScheduleChange, buffer, buffer_len });
+						break;
+					}
+					case NYCBusTripEvent::TripComplete:
+					{
+						unsigned char *buffer = nullptr;
+						int buffer_len = 0;
+						fBuildTripCompleteUpdate(trip, buffer, buffer_len);
+						assert(buffer != nullptr);
+						printf("Buffer ptr: %d", buffer);
+						messages.push_back({ WSInterface::NYCBus_TripComplete, buffer, buffer_len });
 						break;
 					}
 					default:

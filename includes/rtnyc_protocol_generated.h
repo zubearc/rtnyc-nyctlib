@@ -9,7 +9,7 @@
 namespace nyc {
 namespace realtime {
 
-struct _Version2;
+struct _Version3;
 
 struct ClientCommandProxyRequest;
 
@@ -20,6 +20,8 @@ struct Position;
 struct NYCSubwayTrip;
 
 struct NYCSubwaySchedule;
+
+struct NYCSubwayVehiclePosition;
 
 struct NYCBusTrip;
 
@@ -38,6 +40,8 @@ struct NYCBusStopUpdate;
 struct NYCBusScheduleUpdate;
 
 struct NYCBusTrips;
+
+struct NYCBusTripComplete;
 
 enum TripStatus {
   TripStatus_AtStation = 0,
@@ -106,31 +110,31 @@ inline const char *EnumNameDirection(Direction e) {
   return EnumNamesDirection()[index];
 }
 
-struct _Version2 FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
+struct _Version3 FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   bool Verify(flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
            verifier.EndTable();
   }
 };
 
-struct _Version2Builder {
+struct _Version3Builder {
   flatbuffers::FlatBufferBuilder &fbb_;
   flatbuffers::uoffset_t start_;
-  explicit _Version2Builder(flatbuffers::FlatBufferBuilder &_fbb)
+  explicit _Version3Builder(flatbuffers::FlatBufferBuilder &_fbb)
         : fbb_(_fbb) {
     start_ = fbb_.StartTable();
   }
-  _Version2Builder &operator=(const _Version2Builder &);
-  flatbuffers::Offset<_Version2> Finish() {
+  _Version3Builder &operator=(const _Version3Builder &);
+  flatbuffers::Offset<_Version3> Finish() {
     const auto end = fbb_.EndTable(start_);
-    auto o = flatbuffers::Offset<_Version2>(end);
+    auto o = flatbuffers::Offset<_Version3>(end);
     return o;
   }
 };
 
-inline flatbuffers::Offset<_Version2> Create_Version2(
+inline flatbuffers::Offset<_Version3> Create_Version3(
     flatbuffers::FlatBufferBuilder &_fbb) {
-  _Version2Builder builder_(_fbb);
+  _Version3Builder builder_(_fbb);
   return builder_.Finish();
 }
 
@@ -550,6 +554,92 @@ inline flatbuffers::Offset<NYCSubwaySchedule> CreateNYCSubwayScheduleDirect(
       stop_id ? _fbb.CreateString(stop_id) : 0);
 }
 
+struct NYCSubwayVehiclePosition FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
+  enum {
+    VT_STOP_ID = 4,
+    VT_TRACK = 6,
+    VT_RELATIVE_STATUS = 8,
+    VT_STOP_INDEX = 10
+  };
+  const flatbuffers::String *stop_id() const {
+    return GetPointer<const flatbuffers::String *>(VT_STOP_ID);
+  }
+  const flatbuffers::String *track() const {
+    return GetPointer<const flatbuffers::String *>(VT_TRACK);
+  }
+  TripStatus relative_status() const {
+    return static_cast<TripStatus>(GetField<int8_t>(VT_RELATIVE_STATUS, 0));
+  }
+  int32_t stop_index() const {
+    return GetField<int32_t>(VT_STOP_INDEX, 0);
+  }
+  bool Verify(flatbuffers::Verifier &verifier) const {
+    return VerifyTableStart(verifier) &&
+           VerifyOffset(verifier, VT_STOP_ID) &&
+           verifier.Verify(stop_id()) &&
+           VerifyOffset(verifier, VT_TRACK) &&
+           verifier.Verify(track()) &&
+           VerifyField<int8_t>(verifier, VT_RELATIVE_STATUS) &&
+           VerifyField<int32_t>(verifier, VT_STOP_INDEX) &&
+           verifier.EndTable();
+  }
+};
+
+struct NYCSubwayVehiclePositionBuilder {
+  flatbuffers::FlatBufferBuilder &fbb_;
+  flatbuffers::uoffset_t start_;
+  void add_stop_id(flatbuffers::Offset<flatbuffers::String> stop_id) {
+    fbb_.AddOffset(NYCSubwayVehiclePosition::VT_STOP_ID, stop_id);
+  }
+  void add_track(flatbuffers::Offset<flatbuffers::String> track) {
+    fbb_.AddOffset(NYCSubwayVehiclePosition::VT_TRACK, track);
+  }
+  void add_relative_status(TripStatus relative_status) {
+    fbb_.AddElement<int8_t>(NYCSubwayVehiclePosition::VT_RELATIVE_STATUS, static_cast<int8_t>(relative_status), 0);
+  }
+  void add_stop_index(int32_t stop_index) {
+    fbb_.AddElement<int32_t>(NYCSubwayVehiclePosition::VT_STOP_INDEX, stop_index, 0);
+  }
+  explicit NYCSubwayVehiclePositionBuilder(flatbuffers::FlatBufferBuilder &_fbb)
+        : fbb_(_fbb) {
+    start_ = fbb_.StartTable();
+  }
+  NYCSubwayVehiclePositionBuilder &operator=(const NYCSubwayVehiclePositionBuilder &);
+  flatbuffers::Offset<NYCSubwayVehiclePosition> Finish() {
+    const auto end = fbb_.EndTable(start_);
+    auto o = flatbuffers::Offset<NYCSubwayVehiclePosition>(end);
+    return o;
+  }
+};
+
+inline flatbuffers::Offset<NYCSubwayVehiclePosition> CreateNYCSubwayVehiclePosition(
+    flatbuffers::FlatBufferBuilder &_fbb,
+    flatbuffers::Offset<flatbuffers::String> stop_id = 0,
+    flatbuffers::Offset<flatbuffers::String> track = 0,
+    TripStatus relative_status = TripStatus_AtStation,
+    int32_t stop_index = 0) {
+  NYCSubwayVehiclePositionBuilder builder_(_fbb);
+  builder_.add_stop_index(stop_index);
+  builder_.add_track(track);
+  builder_.add_stop_id(stop_id);
+  builder_.add_relative_status(relative_status);
+  return builder_.Finish();
+}
+
+inline flatbuffers::Offset<NYCSubwayVehiclePosition> CreateNYCSubwayVehiclePositionDirect(
+    flatbuffers::FlatBufferBuilder &_fbb,
+    const char *stop_id = nullptr,
+    const char *track = nullptr,
+    TripStatus relative_status = TripStatus_AtStation,
+    int32_t stop_index = 0) {
+  return nyc::realtime::CreateNYCSubwayVehiclePosition(
+      _fbb,
+      stop_id ? _fbb.CreateString(stop_id) : 0,
+      track ? _fbb.CreateString(track) : 0,
+      relative_status,
+      stop_index);
+}
+
 struct NYCBusTrip FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   enum {
     VT_GTFS_TRIP_ID = 4,
@@ -900,8 +990,7 @@ struct NYCSubwayScheduleUpdate FLATBUFFERS_FINAL_CLASS : private flatbuffers::Ta
     VT_TIMESTAMP = 4,
     VT_TRIP = 6,
     VT_SCHEDULE = 8,
-    VT_CURRENT_STOP_ID = 10,
-    VT_CURRENT_TRACK = 12
+    VT_LAST_VEHICLE_POSITION = 10
   };
   int32_t timestamp() const {
     return GetField<int32_t>(VT_TIMESTAMP, 0);
@@ -912,11 +1001,8 @@ struct NYCSubwayScheduleUpdate FLATBUFFERS_FINAL_CLASS : private flatbuffers::Ta
   const flatbuffers::Vector<flatbuffers::Offset<NYCSubwaySchedule>> *schedule() const {
     return GetPointer<const flatbuffers::Vector<flatbuffers::Offset<NYCSubwaySchedule>> *>(VT_SCHEDULE);
   }
-  const flatbuffers::String *current_stop_id() const {
-    return GetPointer<const flatbuffers::String *>(VT_CURRENT_STOP_ID);
-  }
-  const flatbuffers::String *current_track() const {
-    return GetPointer<const flatbuffers::String *>(VT_CURRENT_TRACK);
+  const NYCSubwayVehiclePosition *last_vehicle_position() const {
+    return GetPointer<const NYCSubwayVehiclePosition *>(VT_LAST_VEHICLE_POSITION);
   }
   bool Verify(flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
@@ -926,10 +1012,8 @@ struct NYCSubwayScheduleUpdate FLATBUFFERS_FINAL_CLASS : private flatbuffers::Ta
            VerifyOffset(verifier, VT_SCHEDULE) &&
            verifier.Verify(schedule()) &&
            verifier.VerifyVectorOfTables(schedule()) &&
-           VerifyOffset(verifier, VT_CURRENT_STOP_ID) &&
-           verifier.Verify(current_stop_id()) &&
-           VerifyOffset(verifier, VT_CURRENT_TRACK) &&
-           verifier.Verify(current_track()) &&
+           VerifyOffset(verifier, VT_LAST_VEHICLE_POSITION) &&
+           verifier.VerifyTable(last_vehicle_position()) &&
            verifier.EndTable();
   }
 };
@@ -946,11 +1030,8 @@ struct NYCSubwayScheduleUpdateBuilder {
   void add_schedule(flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<NYCSubwaySchedule>>> schedule) {
     fbb_.AddOffset(NYCSubwayScheduleUpdate::VT_SCHEDULE, schedule);
   }
-  void add_current_stop_id(flatbuffers::Offset<flatbuffers::String> current_stop_id) {
-    fbb_.AddOffset(NYCSubwayScheduleUpdate::VT_CURRENT_STOP_ID, current_stop_id);
-  }
-  void add_current_track(flatbuffers::Offset<flatbuffers::String> current_track) {
-    fbb_.AddOffset(NYCSubwayScheduleUpdate::VT_CURRENT_TRACK, current_track);
+  void add_last_vehicle_position(flatbuffers::Offset<NYCSubwayVehiclePosition> last_vehicle_position) {
+    fbb_.AddOffset(NYCSubwayScheduleUpdate::VT_LAST_VEHICLE_POSITION, last_vehicle_position);
   }
   explicit NYCSubwayScheduleUpdateBuilder(flatbuffers::FlatBufferBuilder &_fbb)
         : fbb_(_fbb) {
@@ -969,11 +1050,9 @@ inline flatbuffers::Offset<NYCSubwayScheduleUpdate> CreateNYCSubwayScheduleUpdat
     int32_t timestamp = 0,
     flatbuffers::Offset<NYCSubwayTrip> trip = 0,
     flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<NYCSubwaySchedule>>> schedule = 0,
-    flatbuffers::Offset<flatbuffers::String> current_stop_id = 0,
-    flatbuffers::Offset<flatbuffers::String> current_track = 0) {
+    flatbuffers::Offset<NYCSubwayVehiclePosition> last_vehicle_position = 0) {
   NYCSubwayScheduleUpdateBuilder builder_(_fbb);
-  builder_.add_current_track(current_track);
-  builder_.add_current_stop_id(current_stop_id);
+  builder_.add_last_vehicle_position(last_vehicle_position);
   builder_.add_schedule(schedule);
   builder_.add_trip(trip);
   builder_.add_timestamp(timestamp);
@@ -985,15 +1064,13 @@ inline flatbuffers::Offset<NYCSubwayScheduleUpdate> CreateNYCSubwayScheduleUpdat
     int32_t timestamp = 0,
     flatbuffers::Offset<NYCSubwayTrip> trip = 0,
     const std::vector<flatbuffers::Offset<NYCSubwaySchedule>> *schedule = nullptr,
-    const char *current_stop_id = nullptr,
-    const char *current_track = nullptr) {
+    flatbuffers::Offset<NYCSubwayVehiclePosition> last_vehicle_position = 0) {
   return nyc::realtime::CreateNYCSubwayScheduleUpdate(
       _fbb,
       timestamp,
       trip,
       schedule ? _fbb.CreateVector<flatbuffers::Offset<NYCSubwaySchedule>>(*schedule) : 0,
-      current_stop_id ? _fbb.CreateString(current_stop_id) : 0,
-      current_track ? _fbb.CreateString(current_track) : 0);
+      last_vehicle_position);
 }
 
 struct NYCSubwayTrips FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
@@ -1390,6 +1467,67 @@ inline flatbuffers::Offset<NYCBusTrips> CreateNYCBusTripsDirect(
       _fbb,
       timestamp,
       trips ? _fbb.CreateVector<flatbuffers::Offset<NYCBusScheduleUpdate>>(*trips) : 0);
+}
+
+struct NYCBusTripComplete FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
+  enum {
+    VT_TIMESTAMP = 4,
+    VT_VEHICLE_ID = 6
+  };
+  int32_t timestamp() const {
+    return GetField<int32_t>(VT_TIMESTAMP, 0);
+  }
+  const flatbuffers::String *vehicle_id() const {
+    return GetPointer<const flatbuffers::String *>(VT_VEHICLE_ID);
+  }
+  bool Verify(flatbuffers::Verifier &verifier) const {
+    return VerifyTableStart(verifier) &&
+           VerifyField<int32_t>(verifier, VT_TIMESTAMP) &&
+           VerifyOffset(verifier, VT_VEHICLE_ID) &&
+           verifier.Verify(vehicle_id()) &&
+           verifier.EndTable();
+  }
+};
+
+struct NYCBusTripCompleteBuilder {
+  flatbuffers::FlatBufferBuilder &fbb_;
+  flatbuffers::uoffset_t start_;
+  void add_timestamp(int32_t timestamp) {
+    fbb_.AddElement<int32_t>(NYCBusTripComplete::VT_TIMESTAMP, timestamp, 0);
+  }
+  void add_vehicle_id(flatbuffers::Offset<flatbuffers::String> vehicle_id) {
+    fbb_.AddOffset(NYCBusTripComplete::VT_VEHICLE_ID, vehicle_id);
+  }
+  explicit NYCBusTripCompleteBuilder(flatbuffers::FlatBufferBuilder &_fbb)
+        : fbb_(_fbb) {
+    start_ = fbb_.StartTable();
+  }
+  NYCBusTripCompleteBuilder &operator=(const NYCBusTripCompleteBuilder &);
+  flatbuffers::Offset<NYCBusTripComplete> Finish() {
+    const auto end = fbb_.EndTable(start_);
+    auto o = flatbuffers::Offset<NYCBusTripComplete>(end);
+    return o;
+  }
+};
+
+inline flatbuffers::Offset<NYCBusTripComplete> CreateNYCBusTripComplete(
+    flatbuffers::FlatBufferBuilder &_fbb,
+    int32_t timestamp = 0,
+    flatbuffers::Offset<flatbuffers::String> vehicle_id = 0) {
+  NYCBusTripCompleteBuilder builder_(_fbb);
+  builder_.add_vehicle_id(vehicle_id);
+  builder_.add_timestamp(timestamp);
+  return builder_.Finish();
+}
+
+inline flatbuffers::Offset<NYCBusTripComplete> CreateNYCBusTripCompleteDirect(
+    flatbuffers::FlatBufferBuilder &_fbb,
+    int32_t timestamp = 0,
+    const char *vehicle_id = nullptr) {
+  return nyc::realtime::CreateNYCBusTripComplete(
+      _fbb,
+      timestamp,
+      vehicle_id ? _fbb.CreateString(vehicle_id) : 0);
 }
 
 }  // namespace realtime

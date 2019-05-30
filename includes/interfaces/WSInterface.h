@@ -50,6 +50,7 @@ namespace nyctlib {
 			NYCBus_TripAssigned,
 			NYCBus_ScheduleChange,
 			NYCBus_PositionChange,
+			NYCBus_TripComplete,
 
 			NYCBus_CurrentTripsResponse = 0x2011
 		};

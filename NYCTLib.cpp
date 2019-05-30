@@ -107,20 +107,22 @@ int main(int argc, char *argv[]) {
 		std::unique_ptr<IFeedService<GtfsFeedParser>> busVUFeedParser = std::make_unique<DynamicBusFeedService>(
 			"http://gtfsrt.prod.obanyc.com/vehiclePositions?key=");
 
-/*		auto rfs = new ReplayFeedService<NYCTFeedParser>("C:/Users/Extreme/CMakeBuilds/9a20cf93-1bae-a730-96f6-0e9e11475965/build/x86-Debug", "gtfs_nycts");
-		rfs->jumpTo("gtfs_nycts_1531197614.bin");
-		rfs->setMaximumPlaybacks(1);
+/*		auto rfs126456 = new ReplayFeedService<NYCTFeedParser>(
+			//"C:/Users/Extreme/CMakeBuilds/9a20cf93-1bae-a730-96f6-0e9e11475965/build/x86-Debug", "gtfs_nycts"
+			"H:/SymCache/MTAGTFSData/2019/01/02", ""
+			);
+		//rfs126456->jumpTo("gtfs_nycts_1531197614.bin");
+		//rfs126456->setMaximumPlaybacks(1);
 			
-		auto feedService = std::unique_ptr<IFeedService>((IFeedService*)rfs);
-*/		
-
+		INYCTFeedServicePtr replayFeedService126456 = std::unique_ptr<IFeedService<NYCTFeedParser>>(rfs126456);
+	*/	
 		auto event_holder = std::make_shared<BlockingEventHolder<SubwayTripEvent>>();
 		auto bus_event_holder = std::make_shared<BlockingEventHolder<NYCBusTripEvent>>();
-		NYCTFeedTracker nyctFeedTracker123456(feedService123456, event_holder);
+		NYCTFeedTracker nyctFeedTracker123456(feedService123456 /*replayFeedService126456*/, event_holder);
 		NYCTFeedTracker nyctFeedTrackerBDFM(feedServiceBDFM, event_holder);
 		NYCTFeedTracker nyctFeedTrackerL(feedServiceL, event_holder);
 		NYCTFeedTracker nyctFeedTrackerACE(feedServiceACE, event_holder);
-
+		
 		NYCBusTracker nycBusTracker(busTUFeedParser, busVUFeedParser, bus_event_holder);
 
 		//auto trips = nyctFeedTracker.getTripsScheduledToArriveAtStop("217S");
@@ -156,7 +158,7 @@ int main(int argc, char *argv[]) {
 		tracker_runningACE.detach();
 		tracker_runningBUS.detach();
 		WSInterface wsi;
-		auto subway_ws_interface = NYCTSubwayInterface(&wsi, { &nyctFeedTracker123456, &nyctFeedTrackerBDFM, &nyctFeedTrackerL }, event_holder);
+		auto subway_ws_interface = NYCTSubwayInterface(&wsi, { &nyctFeedTracker123456, &nyctFeedTrackerBDFM, &nyctFeedTrackerL, &nyctFeedTrackerACE }, event_holder);
 
 		//auto bus_ws_interface = NYCBusInterface(&wsi, { &nycBusTracker }, bus_event_holder);
 
@@ -244,6 +246,14 @@ int main(int argc, char *argv[]) {
 
 			WSInterface wsi;
 			auto bus_ws_interface = NYCBusInterface(&wsi, { &nycBusTracker }, bus_event_holder);
+
+			auto ws_listening_thread = std::thread([&] {
+				wsi.start(host, portNumber);
+			});
+
+			auto event_handling_thread = std::thread([&] {
+				bus_ws_interface.run();
+			});
 
 			std::this_thread::sleep_for(std::chrono::seconds(killTime));
 		} else {

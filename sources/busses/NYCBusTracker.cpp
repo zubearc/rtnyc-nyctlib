@@ -45,7 +45,8 @@ namespace nyctlib {
 					this->tracked_trips[vehid].last_update_time = vuFeed->getFeedTime();
 				} else {
 					auto &tracked = this->tracked_trips[vehid];
-					tracked.last_update_time = vuFeed->getFeedTime();
+					unaccounted_trips.erase(vehid);
+					tracked.last_update_time = MAX(vuFeed->getFeedTime(), tracked.last_update_time);
 					auto &tracked_trip = tracked.last_tracked_vehicle;
 
 					auto original_trip_schedule = tracked.initial_trip_schedule;
@@ -161,6 +162,8 @@ namespace nyctlib {
 
 				{
 					auto &tracked_trip = this->tracked_trips[vehid]; // created if not exists
+					tracked_trip.last_update_time = MAX(tracked_trip.last_update_time, tuFeed->getFeedTime());
+					unaccounted_trips.erase(vehid);
 
 					if (tracked_trip.last_tracked_trip.trip == nullptr) {
 						tracked_trip.last_tracked_trip = GtfsTripUpdate(*tu);
@@ -199,6 +202,67 @@ namespace nyctlib {
 		//this->last_tracked_vehicles.clear();
 
 		//auto unaccounted_trips = this->tracked_trips2;
+
+		// if we loose track of more than 26 trips within 45 sec, something probably went wrong
+		// unless 10 trains got to their terminals in less than a minute. more likely we got bad data.
+		if (vuFeed || tuFeed) {
+			/*auto time_diff_from_last = vuFeed != nullptr ? vuFeed->getFeedTime() - this->vu_feed_updated_time :
+				tuFeed->getFeedTime() - this->tu_feed_updated_time;*/
+			// below ensures no 1 feed can clear the other because it's out of date
+			auto relevant_feed_time = (vuFeed != nullptr ? vuFeed->getFeedTime() : tuFeed->getFeedTime());
+			auto time_diff_from_last =  relevant_feed_time - MAX(this->vu_feed_updated_time, this->tu_feed_updated_time);
+
+			auto acceptable_drop_time = 45;
+
+			if (unaccounted_trips.size() > 40 && time_diff_from_last <= acceptable_drop_time) {
+				LOG_FT_WARN("NYCBusTracker: " CH_RED "Too many busses are now unaccounted for -- refusing to drop tracking: %d > 20 (on %s)\n" CRESET, unaccounted_trips.size(), vuFeed != nullptr ? "vuFeed" : "tuFeed");
+				return false;
+			}
+
+			//acceptable_drop_time += 15;
+
+			for (auto unaccounted_trip : unaccounted_trips) {
+				auto tripid = unaccounted_trip.first;
+				auto tracked = unaccounted_trip.second;
+				if ((relevant_feed_time - tracked.last_update_time) < acceptable_drop_time) {
+					LOG_FT_INFO("NYCBusTracker: Not dropping [%s] as was updated above acceptable drop time, %d < %d\n", tripid.c_str(), (int)(relevant_feed_time - tracked.last_update_time), acceptable_drop_time);
+					continue;
+				}
+				if (tracked.last_tracked_vehicle.trip) {
+					auto tracked_vech = tracked.last_tracked_vehicle;
+					auto current_stop_index = tracked_vech.current_stop_index;
+					auto scheduled_stop_count = tracked.initial_trip_schedule.size();
+					auto last_accounted_stop_id = tracked_vech.stop_id;
+					auto its = tracked.initial_trip_schedule;
+					if (its.size() == 0) {
+						LOG_FT_DEBUG("NYCBusTracker: Lost track of bus '%s' with no initial trip schedule\n", tripid.c_str());
+						continue;
+					}
+					auto scheduled_terminal_stop_id = its[(int)its.size() - 1].stop_id;
+
+					if (last_accounted_stop_id == scheduled_terminal_stop_id) {
+						LOG_FT_INFO("NYCBusTracker: " CH_BLUE "Trip '%s' is complete and has reached its scheduled terminal.\n" CRESET, tripid.c_str());
+					}
+					else {
+						LOG_FT_INFO("NYCBusTracker: " CH_RED "Lost track of trip '%s'" CRESET "\n", tripid.c_str());
+						NYCBusTripEvent event;
+						event.event_category = NYCBusTripEvent::LostTrip;
+						event.initial_tracked_trip = &tracked;
+						event.trip_id = tripid;
+						this->queueEvent(event);
+					}
+
+					LOG_FT_DEBUG("NYCBusTracker: Index was %d/%d (%s/%s)\n",
+						current_stop_index,
+						scheduled_stop_count,
+						last_accounted_stop_id.c_str(),
+						scheduled_terminal_stop_id.c_str());
+				}
+
+				this->clearTrackedDataForVehicle(unaccounted_trip.first);
+			}
+		}
+		end:
 
 		if (vuFeed != nullptr)
 			this->vu_feed_updated_time = vuFeed->getFeedTime();
