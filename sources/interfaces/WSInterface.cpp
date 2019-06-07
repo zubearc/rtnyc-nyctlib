@@ -7,6 +7,8 @@
 #include "Globals.h"
 #include "rtnyc_protocol_generated.h"
 
+//#include "interfaces/TestConsumerInerface.h"
+
 // TODO: Remove this later on, currently used for debugging a uWS bug
 #define LOG_DEBUG printf
 
@@ -122,6 +124,15 @@ namespace nyctlib {
 			}).detach();*/
 			
 			this->stop(1001, "Client requested server terminate");
+		} else if (message_type == 4) { // SetClientType
+			auto _requested_format = data["type"];
+			auto requested_format = _requested_format.int_value();
+
+			if (requested_format == 2) { // Aggregator
+				this->client_map[client].client_type = Aggregator;
+			}
+
+			this->respondStatus(client, "OK", MessageType::Response);
 		}
 	}
 
@@ -210,10 +221,12 @@ namespace nyctlib {
 	// do this double pointer casting. I have no fucking idea why.
 	// It took hours to hunt this issue down.
 	void WSInterface::stop(int code, std::string message) {
+		printf("WSI: Stop!\n");
 		((uWS::Group<uWS::SERVER>*)(uWS::Hub*)server)->close(code, (char*)message.data(), message.length());
 	}
 
 	void WSInterface::terminate() {
+		printf("WSI: Terminate!\n");
 		((uWS::Group<uWS::SERVER>*)(uWS::Hub*)server)->terminate();
 	}
 
@@ -264,7 +277,7 @@ namespace nyctlib {
 #ifdef _WIN32
 			// Fixes bug with sending multiple messages one after the other
 			// That would result in program faults
-			Sleep(90);
+			Sleep(180);
 #endif
 			if (!ws->isClosed()) {
 				ws->sendPrepared(prepared);
@@ -287,9 +300,14 @@ namespace nyctlib {
 		for (auto client : client_map) {
 			if (client.second.requested_format != FormatFlatbuffer)
 				continue;
+			if (reason == AggregatorFeed && client.second.client_type != Aggregator)
+				continue;
 			auto ws = GETSERVER(client.first);
 			ws->sendPrepared(prepared);
 		}
+
+		//testReadMessage(ws_message, message_len + 10);
+
 		delete[] ws_message;
 	}
 
@@ -326,10 +344,19 @@ namespace nyctlib {
 		for (auto client : client_map) {
 			if (client.second.requested_format != FormatFlatbuffer)
 				continue;
+			if (reason == AggregatorFeed && client.second.client_type != Aggregator)
+				continue;
 			auto ws = GETSERVER(client.first);
 			ws->send(ws_message, messages_len + 6, uWS::BINARY, nullptr, nullptr, true);
 			//ws->sendPrepared(prepared);
+#ifdef _WIN32
+// Fixes bug with sending multiple messages one after the other
+// That would result in program faults
+			Sleep(400);
+#endif
 		}
+
+		//testReadMessage(ws_message, messages_len + 6);
 
 		delete[] ws_message;
 	}

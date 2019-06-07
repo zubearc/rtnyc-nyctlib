@@ -112,17 +112,25 @@ namespace nyctlib {
 		return j;
 	}
 
-	flatbuffers::Offset<nyc::realtime::NYCBusTrip> buildTrip(flatbuffers::FlatBufferBuilder &builder, GtfsTrip *trip) {
-		auto _trip_id = builder.CreateString(trip->trip_id);
+	flatbuffers::Offset<nyc::realtime::NYCBusTrip> buildTrip(flatbuffers::FlatBufferBuilder &builder, GtfsTrip *trip, bool lite = false) {
+		flatbuffers::Offset<flatbuffers::String> _trip_id;
+		flatbuffers::Offset<flatbuffers::String> _start_date;
 		auto _route_id = builder.CreateString(trip->route_id);
 		auto _veh_id = builder.CreateString(trip->vehicle_id);
-		auto _start_date = builder.CreateString(trip->start_date);
 
+		if (!lite) {
+			_trip_id = builder.CreateString(trip->trip_id);
+			_start_date = builder.CreateString(trip->start_date);
+		}
+		
 		nyc::realtime::NYCBusTripBuilder trip_buffer(builder);
-		trip_buffer.add_gtfs_trip_id(_trip_id);
 		trip_buffer.add_route_id(_route_id);
 		trip_buffer.add_vehicle_id(_veh_id);
-		trip_buffer.add_start_date(_start_date);
+
+		if (!lite) {
+			trip_buffer.add_gtfs_trip_id(_trip_id);
+			trip_buffer.add_start_date(_start_date);
+		}
 
 		return trip_buffer.Finish();
 	}
@@ -145,9 +153,12 @@ namespace nyctlib {
 		flatbuffers::FlatBufferBuilder builder(1024);
 
 		// We must allocate everything before building the final buffer
-		auto _trip_id = builder.CreateString(e.trip_id);
+		//auto _trip_id = builder.CreateString(e.trip_id);
 		//flatbuffers::Offset<flatbuffers::String> _current_stop_id;
-		flatbuffers::Offset<flatbuffers::String> _next_stop_id;
+		//flatbuffers::Offset<flatbuffers::String> _next_stop_id;
+		// On bus feeds, we are always 'Enroute To' and 'At' is not sent
+		// Accordingly, always set next_stop_id
+		auto _next_stop_id = builder.CreateString(currently_relevant_stop_id);
 		//flatbuffers::Offset<flatbuffers::String> _last_stop_id;
 
 		bool _has_next_stop = false;
@@ -155,7 +166,7 @@ namespace nyctlib {
 		int _next_stop_arrival_time;
 		int _next_stop_departure_time;
 
-		auto trip_buf = buildTrip(builder, trip);
+		auto trip_buf = buildTrip(builder, trip, true);
 
 		nyc::realtime::PositionBuilder position_builder(builder);
 		position_builder.add_latitude(vu->latitude);
@@ -318,6 +329,9 @@ namespace nyctlib {
 
 			if (wsInterface->has_flat_clients > 0) {
 				std::vector<WSInterface::BinaryMessageWrapper> messages;
+				// only for aggregators
+				std::vector<WSInterface::BinaryMessageWrapper> amessages;
+
 				for (int i = 0; i < count; i++) {
 					auto trip = tracked_trip[i];
 
@@ -349,9 +363,9 @@ namespace nyctlib {
 						unsigned char *buffer = nullptr;
 						int buffer_len = 0;
 						fBuildTripScheduleUpdate(trip, buffer, buffer_len);
-						assert(buffer != nullptr);
-						printf("Buffer ptr: %d", buffer);
-						//messages.push_back({ WSInterface::NYCBus_ScheduleChange, buffer, buffer_len });
+						//assert(buffer != nullptr);
+						//printf("Buffer ptr: %d", buffer);
+						amessages.push_back({ WSInterface::NYCBus_ScheduleChange, buffer, buffer_len });
 						break;
 					}
 					case NYCBusTripEvent::TripComplete:
@@ -369,8 +383,12 @@ namespace nyctlib {
 					}
 				}
 
-				if (messages.size())
+				if (messages.size()) {
 					this->wsInterface->broadcastBinaryPreferredBatch(WSInterface::MessageType::SubscribtionFeed, messages);
+				}
+				if (amessages.size()) {
+					this->wsInterface->broadcastBinaryPreferredBatch(WSInterface::MessageType::AggregatorFeed, amessages);
+				}
 				// Cleanup is already done for us in above function
 			}
 		}

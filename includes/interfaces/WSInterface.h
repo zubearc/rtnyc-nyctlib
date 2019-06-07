@@ -20,9 +20,15 @@ namespace nyctlib {
 			FormatFlatbuffer
 		};
 
+		enum ClientType {
+			Consumer,
+			Aggregator
+		};
+
 		struct ClientDetails {
 			long long connection_time;
 			RequestedFeedFormat requested_format;
+			ClientType client_type = Consumer;
 		};
 
 		enum MessageType : unsigned short {
@@ -32,7 +38,8 @@ namespace nyctlib {
 			Error = 3,
 			SubscribtionFeed = 4,
 			SubscribeRequest = 5, // unused
-			UnsubscribeRequest = 6 // unused
+			UnsubscribeRequest = 6, // unused
+			AggregatorFeed = 7
 		};
 
 		// v1
