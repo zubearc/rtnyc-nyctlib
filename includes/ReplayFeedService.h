@@ -17,12 +17,14 @@ namespace nyctlib {
 		int playback_limit = INT_MAX;
 
 		ReplayFeedService(std::string search_path, std::string search_prefix) {
+			// Sorted on Windows, unsorted on *nix and uses order which files were placed in
+			// directory. Use script to sort files + place in folder in appropriate order in FS.
 			for (fs::recursive_directory_iterator it(search_path), last; it != last; ++it) {
 				auto r = it->path();
 				auto fname = r.filename().string();
 				if (fname.find(search_prefix) != EOF) {
-					//std::cout << "File name found is " << fname << std::endl;
-					this->protobuf_list.push_back(fname);
+					std::cout << "File name found is " << fname << std::endl;
+					this->protobuf_list.push_back(search_path + "/" + fname);
 				}
 			}
 		}
@@ -30,6 +32,8 @@ namespace nyctlib {
 		virtual void update() {
 			if ((current_protobuf_index + 1) < protobuf_list.size() && (playback_limit > 0))
 				current_protobuf_index++;
+			else
+				current_protobuf_index = 0;
 			playback_limit--;
 		};
 

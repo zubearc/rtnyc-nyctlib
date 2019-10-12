@@ -265,3 +265,5 @@ __pycache__/
 
 build/
 buildw/
+
+*.old

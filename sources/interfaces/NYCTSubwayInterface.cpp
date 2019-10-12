@@ -190,11 +190,12 @@ namespace nyctlib {
 		}
 
 		nyc::realtime::NYCSubwayStopUpdateBuilder stop_update(builder);
-		stop_update.add_timestamp((int)tracked->last_update_time);
+		auto ts = tracked->last_update_time ? (int)tracked->last_update_time : tracked->last_tracked_trip.timestamp;
+		stop_update.add_timestamp(ts);
 		stop_update.add_trip_id(_trip_id);
 
-		nyc::realtime::TripStatus ts = *(nyc::realtime::TripStatus*)&vu->stop_progress;
-		stop_update.add_current_status(ts);
+		nyc::realtime::TripStatus tripstatus = *(nyc::realtime::TripStatus*)&vu->stop_progress;
+		stop_update.add_current_status(tripstatus);
 		stop_update.add_cumulative_arrival_delay(tracked->cumulative_arrival_delay);
 		stop_update.add_cumulative_departure_delay(tracked->cumulative_depature_delay);
 		stop_update.add_on_schedule(tracked->updated_trip_schedules.size() == 0 ? true : false);

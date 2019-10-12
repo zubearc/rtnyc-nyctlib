@@ -7,7 +7,6 @@
 
 #include <google/protobuf/stubs/common.h>
 #include <google/protobuf/stubs/port.h>
-#include <google/protobuf/stubs/once.h>
 #include <google/protobuf/io/coded_stream.h>
 #include <google/protobuf/wire_format_lite_inl.h>
 #include <google/protobuf/descriptor.h>
@@ -19,6 +18,16 @@
 #include "third_party/protobuf/version.h"
 #endif
 // @@protoc_insertion_point(includes)
+
+namespace protobuf_gtfs_2drealtime_2eproto {
+extern PROTOBUF_INTERNAL_EXPORT_protobuf_gtfs_2drealtime_2eproto ::google::protobuf::internal::SCCInfo<0> scc_info_TimeRange;
+}  // namespace protobuf_gtfs_2drealtime_2eproto
+namespace protobuf_nyct_2dsubway_2eproto {
+extern PROTOBUF_INTERNAL_EXPORT_protobuf_nyct_2dsubway_2eproto ::google::protobuf::internal::SCCInfo<0> scc_info_NyctStopTimeUpdate;
+extern PROTOBUF_INTERNAL_EXPORT_protobuf_nyct_2dsubway_2eproto ::google::protobuf::internal::SCCInfo<0> scc_info_NyctTripDescriptor;
+extern PROTOBUF_INTERNAL_EXPORT_protobuf_nyct_2dsubway_2eproto ::google::protobuf::internal::SCCInfo<1> scc_info_NyctFeedHeader;
+extern PROTOBUF_INTERNAL_EXPORT_protobuf_nyct_2dsubway_2eproto ::google::protobuf::internal::SCCInfo<1> scc_info_TripReplacementPeriod;
+}  // namespace protobuf_nyct_2dsubway_2eproto
 class TripReplacementPeriodDefaultTypeInternal {
  public:
   ::google::protobuf::internal::ExplicitlyConstructed<TripReplacementPeriod>
@@ -40,15 +49,9 @@ class NyctStopTimeUpdateDefaultTypeInternal {
       _instance;
 } _NyctStopTimeUpdate_default_instance_;
 namespace protobuf_nyct_2dsubway_2eproto {
-void InitDefaultsTripReplacementPeriodImpl() {
+static void InitDefaultsTripReplacementPeriod() {
   GOOGLE_PROTOBUF_VERIFY_VERSION;
 
-#ifdef GOOGLE_PROTOBUF_ENFORCE_UNIQUENESS
-  ::google::protobuf::internal::InitProtobufDefaultsForceUnique();
-#else
-  ::google::protobuf::internal::InitProtobufDefaults();
-#endif  // GOOGLE_PROTOBUF_ENFORCE_UNIQUENESS
-  protobuf_gtfs_2drealtime_2eproto::InitDefaultsTimeRange();
   {
     void* ptr = &::_TripReplacementPeriod_default_instance_;
     new (ptr) ::TripReplacementPeriod();
@@ -57,20 +60,13 @@ void InitDefaultsTripReplacementPeriodImpl() {
   ::TripReplacementPeriod::InitAsDefaultInstance();
 }
 
-void InitDefaultsTripReplacementPeriod() {
-  static GOOGLE_PROTOBUF_DECLARE_ONCE(once);
-  ::google::protobuf::GoogleOnceInit(&once, &InitDefaultsTripReplacementPeriodImpl);
-}
+::google::protobuf::internal::SCCInfo<1> scc_info_TripReplacementPeriod =
+    {{ATOMIC_VAR_INIT(::google::protobuf::internal::SCCInfoBase::kUninitialized), 1, InitDefaultsTripReplacementPeriod}, {
+      &protobuf_gtfs_2drealtime_2eproto::scc_info_TimeRange.base,}};
 
-void InitDefaultsNyctFeedHeaderImpl() {
+static void InitDefaultsNyctFeedHeader() {
   GOOGLE_PROTOBUF_VERIFY_VERSION;
 
-#ifdef GOOGLE_PROTOBUF_ENFORCE_UNIQUENESS
-  ::google::protobuf::internal::InitProtobufDefaultsForceUnique();
-#else
-  ::google::protobuf::internal::InitProtobufDefaults();
-#endif  // GOOGLE_PROTOBUF_ENFORCE_UNIQUENESS
-  protobuf_nyct_2dsubway_2eproto::InitDefaultsTripReplacementPeriod();
   {
     void* ptr = &::_NyctFeedHeader_default_instance_;
     new (ptr) ::NyctFeedHeader();
@@ -79,19 +75,13 @@ void InitDefaultsNyctFeedHeaderImpl() {
   ::NyctFeedHeader::InitAsDefaultInstance();
 }
 
-void InitDefaultsNyctFeedHeader() {
-  static GOOGLE_PROTOBUF_DECLARE_ONCE(once);
-  ::google::protobuf::GoogleOnceInit(&once, &InitDefaultsNyctFeedHeaderImpl);
-}
+::google::protobuf::internal::SCCInfo<1> scc_info_NyctFeedHeader =
+    {{ATOMIC_VAR_INIT(::google::protobuf::internal::SCCInfoBase::kUninitialized), 1, InitDefaultsNyctFeedHeader}, {
+      &protobuf_nyct_2dsubway_2eproto::scc_info_TripReplacementPeriod.base,}};
 
-void InitDefaultsNyctTripDescriptorImpl() {
+static void InitDefaultsNyctTripDescriptor() {
   GOOGLE_PROTOBUF_VERIFY_VERSION;
 
-#ifdef GOOGLE_PROTOBUF_ENFORCE_UNIQUENESS
-  ::google::protobuf::internal::InitProtobufDefaultsForceUnique();
-#else
-  ::google::protobuf::internal::InitProtobufDefaults();
-#endif  // GOOGLE_PROTOBUF_ENFORCE_UNIQUENESS
   {
     void* ptr = &::_NyctTripDescriptor_default_instance_;
     new (ptr) ::NyctTripDescriptor();
@@ -100,19 +90,12 @@ void InitDefaultsNyctTripDescriptorImpl() {
   ::NyctTripDescriptor::InitAsDefaultInstance();
 }
 
-void InitDefaultsNyctTripDescriptor() {
-  static GOOGLE_PROTOBUF_DECLARE_ONCE(once);
-  ::google::protobuf::GoogleOnceInit(&once, &InitDefaultsNyctTripDescriptorImpl);
-}
+::google::protobuf::internal::SCCInfo<0> scc_info_NyctTripDescriptor =
+    {{ATOMIC_VAR_INIT(::google::protobuf::internal::SCCInfoBase::kUninitialized), 0, InitDefaultsNyctTripDescriptor}, {}};
 
-void InitDefaultsNyctStopTimeUpdateImpl() {
+static void InitDefaultsNyctStopTimeUpdate() {
   GOOGLE_PROTOBUF_VERIFY_VERSION;
 
-#ifdef GOOGLE_PROTOBUF_ENFORCE_UNIQUENESS
-  ::google::protobuf::internal::InitProtobufDefaultsForceUnique();
-#else
-  ::google::protobuf::internal::InitProtobufDefaults();
-#endif  // GOOGLE_PROTOBUF_ENFORCE_UNIQUENESS
   {
     void* ptr = &::_NyctStopTimeUpdate_default_instance_;
     new (ptr) ::NyctStopTimeUpdate();
@@ -121,9 +104,14 @@ void InitDefaultsNyctStopTimeUpdateImpl() {
   ::NyctStopTimeUpdate::InitAsDefaultInstance();
 }
 
-void InitDefaultsNyctStopTimeUpdate() {
-  static GOOGLE_PROTOBUF_DECLARE_ONCE(once);
-  ::google::protobuf::GoogleOnceInit(&once, &InitDefaultsNyctStopTimeUpdateImpl);
+::google::protobuf::internal::SCCInfo<0> scc_info_NyctStopTimeUpdate =
+    {{ATOMIC_VAR_INIT(::google::protobuf::internal::SCCInfoBase::kUninitialized), 0, InitDefaultsNyctStopTimeUpdate}, {}};
+
+void InitDefaults() {
+  ::google::protobuf::internal::InitSCC(&scc_info_TripReplacementPeriod.base);
+  ::google::protobuf::internal::InitSCC(&scc_info_NyctFeedHeader.base);
+  ::google::protobuf::internal::InitSCC(&scc_info_NyctTripDescriptor.base);
+  ::google::protobuf::internal::InitSCC(&scc_info_NyctStopTimeUpdate.base);
 }
 
 ::google::protobuf::Metadata file_level_metadata[4];
@@ -185,15 +173,14 @@ static ::google::protobuf::Message const * const file_default_instances[] = {
 
 void protobuf_AssignDescriptors() {
   AddDescriptors();
-  ::google::protobuf::MessageFactory* factory = NULL;
   AssignDescriptors(
-      "nyct-subway.proto", schemas, file_default_instances, TableStruct::offsets, factory,
+      "nyct-subway.proto", schemas, file_default_instances, TableStruct::offsets,
       file_level_metadata, file_level_enum_descriptors, NULL);
 }
 
 void protobuf_AssignDescriptorsOnce() {
-  static GOOGLE_PROTOBUF_DECLARE_ONCE(once);
-  ::google::protobuf::GoogleOnceInit(&once, &protobuf_AssignDescriptors);
+  static ::google::protobuf::internal::once_flag once;
+  ::google::protobuf::internal::call_once(once, protobuf_AssignDescriptors);
 }
 
 void protobuf_RegisterTypes(const ::std::string&) GOOGLE_PROTOBUF_ATTRIBUTE_COLD;
@@ -234,8 +221,8 @@ void AddDescriptorsImpl() {
 }
 
 void AddDescriptors() {
-  static GOOGLE_PROTOBUF_DECLARE_ONCE(once);
-  ::google::protobuf::GoogleOnceInit(&once, &AddDescriptorsImpl);
+  static ::google::protobuf::internal::once_flag once;
+  ::google::protobuf::internal::call_once(once, AddDescriptorsImpl);
 }
 // Force AddDescriptors() to be called at dynamic initialization time.
 struct StaticDescriptorInitializer {
@@ -287,17 +274,15 @@ const int TripReplacementPeriod::kReplacementPeriodFieldNumber;
 
 TripReplacementPeriod::TripReplacementPeriod()
   : ::google::protobuf::Message(), _internal_metadata_(NULL) {
-  if (GOOGLE_PREDICT_TRUE(this != internal_default_instance())) {
-    ::protobuf_nyct_2dsubway_2eproto::InitDefaultsTripReplacementPeriod();
-  }
+  ::google::protobuf::internal::InitSCC(
+      &protobuf_nyct_2dsubway_2eproto::scc_info_TripReplacementPeriod.base);
   SharedCtor();
   // @@protoc_insertion_point(constructor:TripReplacementPeriod)
 }
 TripReplacementPeriod::TripReplacementPeriod(const TripReplacementPeriod& from)
   : ::google::protobuf::Message(),
       _internal_metadata_(NULL),
-      _has_bits_(from._has_bits_),
-      _cached_size_(0) {
+      _has_bits_(from._has_bits_) {
   _internal_metadata_.MergeFrom(from._internal_metadata_);
   route_id_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
   if (from.has_route_id()) {
@@ -312,7 +297,6 @@ TripReplacementPeriod::TripReplacementPeriod(const TripReplacementPeriod& from)
 }
 
 void TripReplacementPeriod::SharedCtor() {
-  _cached_size_ = 0;
   route_id_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
   replacement_period_ = NULL;
 }
@@ -328,9 +312,7 @@ void TripReplacementPeriod::SharedDtor() {
 }
 
 void TripReplacementPeriod::SetCachedSize(int size) const {
-  GOOGLE_SAFE_CONCURRENT_WRITES_BEGIN();
-  _cached_size_ = size;
-  GOOGLE_SAFE_CONCURRENT_WRITES_END();
+  _cached_size_.Set(size);
 }
 const ::google::protobuf::Descriptor* TripReplacementPeriod::descriptor() {
   ::protobuf_nyct_2dsubway_2eproto::protobuf_AssignDescriptorsOnce();
@@ -338,17 +320,10 @@ const ::google::protobuf::Descriptor* TripReplacementPeriod::descriptor() {
 }
 
 const TripReplacementPeriod& TripReplacementPeriod::default_instance() {
-  ::protobuf_nyct_2dsubway_2eproto::InitDefaultsTripReplacementPeriod();
+  ::google::protobuf::internal::InitSCC(&protobuf_nyct_2dsubway_2eproto::scc_info_TripReplacementPeriod.base);
   return *internal_default_instance();
 }
 
-TripReplacementPeriod* TripReplacementPeriod::New(::google::protobuf::Arena* arena) const {
-  TripReplacementPeriod* n = new TripReplacementPeriod;
-  if (arena != NULL) {
-    arena->Own(n);
-  }
-  return n;
-}
 
 void TripReplacementPeriod::Clear() {
 // @@protoc_insertion_point(message_clear_start:TripReplacementPeriod)
@@ -359,8 +334,7 @@ void TripReplacementPeriod::Clear() {
   cached_has_bits = _has_bits_[0];
   if (cached_has_bits & 3u) {
     if (cached_has_bits & 0x00000001u) {
-      GOOGLE_DCHECK(!route_id_.IsDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited()));
-      (*route_id_.UnsafeRawStringPointer())->clear();
+      route_id_.ClearNonDefaultToEmptyNoArena();
     }
     if (cached_has_bits & 0x00000002u) {
       GOOGLE_DCHECK(replacement_period_ != NULL);
@@ -377,7 +351,7 @@ bool TripReplacementPeriod::MergePartialFromCodedStream(
   ::google::protobuf::uint32 tag;
   // @@protoc_insertion_point(parse_start:TripReplacementPeriod)
   for (;;) {
-    ::std::pair< ::google::protobuf::uint32, bool> p = input->ReadTagWithCutoffNoLastTag(127u);
+    ::std::pair<::google::protobuf::uint32, bool> p = input->ReadTagWithCutoffNoLastTag(127u);
     tag = p.first;
     if (!p.second) goto handle_unusual;
     switch (::google::protobuf::internal::WireFormatLite::GetTagFieldNumber(tag)) {
@@ -449,7 +423,7 @@ void TripReplacementPeriod::SerializeWithCachedSizes(
   // optional .transit_realtime.TimeRange replacement_period = 2;
   if (cached_has_bits & 0x00000002u) {
     ::google::protobuf::internal::WireFormatLite::WriteMessageMaybeToArray(
-      2, *this->replacement_period_, output);
+      2, this->_internal_replacement_period(), output);
   }
 
   if (_internal_metadata_.have_unknown_fields()) {
@@ -482,7 +456,7 @@ void TripReplacementPeriod::SerializeWithCachedSizes(
   if (cached_has_bits & 0x00000002u) {
     target = ::google::protobuf::internal::WireFormatLite::
       InternalWriteMessageToArray(
-        2, *this->replacement_period_, deterministic, target);
+        2, this->_internal_replacement_period(), deterministic, target);
   }
 
   if (_internal_metadata_.have_unknown_fields()) {
@@ -514,14 +488,12 @@ size_t TripReplacementPeriod::ByteSizeLong() const {
     if (has_replacement_period()) {
       total_size += 1 +
         ::google::protobuf::internal::WireFormatLite::MessageSize(
-          *this->replacement_period_);
+          *replacement_period_);
     }
 
   }
   int cached_size = ::google::protobuf::internal::ToCachedSize(total_size);
-  GOOGLE_SAFE_CONCURRENT_WRITES_BEGIN();
-  _cached_size_ = cached_size;
-  GOOGLE_SAFE_CONCURRENT_WRITES_END();
+  SetCachedSize(cached_size);
   return total_size;
 }
 
@@ -574,6 +546,9 @@ void TripReplacementPeriod::CopyFrom(const TripReplacementPeriod& from) {
 }
 
 bool TripReplacementPeriod::IsInitialized() const {
+  if (has_replacement_period()) {
+    if (!this->replacement_period_->IsInitialized()) return false;
+  }
   return true;
 }
 
@@ -583,11 +558,11 @@ void TripReplacementPeriod::Swap(TripReplacementPeriod* other) {
 }
 void TripReplacementPeriod::InternalSwap(TripReplacementPeriod* other) {
   using std::swap;
-  route_id_.Swap(&other->route_id_);
+  route_id_.Swap(&other->route_id_, &::google::protobuf::internal::GetEmptyStringAlreadyInited(),
+    GetArenaNoVirtual());
   swap(replacement_period_, other->replacement_period_);
   swap(_has_bits_[0], other->_has_bits_[0]);
   _internal_metadata_.Swap(&other->_internal_metadata_);
-  swap(_cached_size_, other->_cached_size_);
 }
 
 ::google::protobuf::Metadata TripReplacementPeriod::GetMetadata() const {
@@ -607,9 +582,8 @@ const int NyctFeedHeader::kTripReplacementPeriodFieldNumber;
 
 NyctFeedHeader::NyctFeedHeader()
   : ::google::protobuf::Message(), _internal_metadata_(NULL) {
-  if (GOOGLE_PREDICT_TRUE(this != internal_default_instance())) {
-    ::protobuf_nyct_2dsubway_2eproto::InitDefaultsNyctFeedHeader();
-  }
+  ::google::protobuf::internal::InitSCC(
+      &protobuf_nyct_2dsubway_2eproto::scc_info_NyctFeedHeader.base);
   SharedCtor();
   // @@protoc_insertion_point(constructor:NyctFeedHeader)
 }
@@ -617,7 +591,6 @@ NyctFeedHeader::NyctFeedHeader(const NyctFeedHeader& from)
   : ::google::protobuf::Message(),
       _internal_metadata_(NULL),
       _has_bits_(from._has_bits_),
-      _cached_size_(0),
       trip_replacement_period_(from.trip_replacement_period_) {
   _internal_metadata_.MergeFrom(from._internal_metadata_);
   nyct_subway_version_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
@@ -628,7 +601,6 @@ NyctFeedHeader::NyctFeedHeader(const NyctFeedHeader& from)
 }
 
 void NyctFeedHeader::SharedCtor() {
-  _cached_size_ = 0;
   nyct_subway_version_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
 
@@ -642,9 +614,7 @@ void NyctFeedHeader::SharedDtor() {
 }
 
 void NyctFeedHeader::SetCachedSize(int size) const {
-  GOOGLE_SAFE_CONCURRENT_WRITES_BEGIN();
-  _cached_size_ = size;
-  GOOGLE_SAFE_CONCURRENT_WRITES_END();
+  _cached_size_.Set(size);
 }
 const ::google::protobuf::Descriptor* NyctFeedHeader::descriptor() {
   ::protobuf_nyct_2dsubway_2eproto::protobuf_AssignDescriptorsOnce();
@@ -652,17 +622,10 @@ const ::google::protobuf::Descriptor* NyctFeedHeader::descriptor() {
 }
 
 const NyctFeedHeader& NyctFeedHeader::default_instance() {
-  ::protobuf_nyct_2dsubway_2eproto::InitDefaultsNyctFeedHeader();
+  ::google::protobuf::internal::InitSCC(&protobuf_nyct_2dsubway_2eproto::scc_info_NyctFeedHeader.base);
   return *internal_default_instance();
 }
 
-NyctFeedHeader* NyctFeedHeader::New(::google::protobuf::Arena* arena) const {
-  NyctFeedHeader* n = new NyctFeedHeader;
-  if (arena != NULL) {
-    arena->Own(n);
-  }
-  return n;
-}
 
 void NyctFeedHeader::Clear() {
 // @@protoc_insertion_point(message_clear_start:NyctFeedHeader)
@@ -673,8 +636,7 @@ void NyctFeedHeader::Clear() {
   trip_replacement_period_.Clear();
   cached_has_bits = _has_bits_[0];
   if (cached_has_bits & 0x00000001u) {
-    GOOGLE_DCHECK(!nyct_subway_version_.IsDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited()));
-    (*nyct_subway_version_.UnsafeRawStringPointer())->clear();
+    nyct_subway_version_.ClearNonDefaultToEmptyNoArena();
   }
   _has_bits_.Clear();
   _internal_metadata_.Clear();
@@ -686,7 +648,7 @@ bool NyctFeedHeader::MergePartialFromCodedStream(
   ::google::protobuf::uint32 tag;
   // @@protoc_insertion_point(parse_start:NyctFeedHeader)
   for (;;) {
-    ::std::pair< ::google::protobuf::uint32, bool> p = input->ReadTagWithCutoffNoLastTag(127u);
+    ::std::pair<::google::protobuf::uint32, bool> p = input->ReadTagWithCutoffNoLastTag(127u);
     tag = p.first;
     if (!p.second) goto handle_unusual;
     switch (::google::protobuf::internal::WireFormatLite::GetTagFieldNumber(tag)) {
@@ -710,7 +672,8 @@ bool NyctFeedHeader::MergePartialFromCodedStream(
       case 2: {
         if (static_cast< ::google::protobuf::uint8>(tag) ==
             static_cast< ::google::protobuf::uint8>(18u /* 18 & 0xFF */)) {
-          DO_(::google::protobuf::internal::WireFormatLite::ReadMessage(input, add_trip_replacement_period()));
+          DO_(::google::protobuf::internal::WireFormatLite::ReadMessage(
+                input, add_trip_replacement_period()));
         } else {
           goto handle_unusual;
         }
@@ -758,7 +721,9 @@ void NyctFeedHeader::SerializeWithCachedSizes(
   for (unsigned int i = 0,
       n = static_cast<unsigned int>(this->trip_replacement_period_size()); i < n; i++) {
     ::google::protobuf::internal::WireFormatLite::WriteMessageMaybeToArray(
-      2, this->trip_replacement_period(static_cast<int>(i)), output);
+      2,
+      this->trip_replacement_period(static_cast<int>(i)),
+      output);
   }
 
   if (_internal_metadata_.have_unknown_fields()) {
@@ -830,9 +795,7 @@ size_t NyctFeedHeader::ByteSizeLong() const {
   }
 
   int cached_size = ::google::protobuf::internal::ToCachedSize(total_size);
-  GOOGLE_SAFE_CONCURRENT_WRITES_BEGIN();
-  _cached_size_ = cached_size;
-  GOOGLE_SAFE_CONCURRENT_WRITES_END();
+  SetCachedSize(cached_size);
   return total_size;
 }
 
@@ -881,6 +844,7 @@ void NyctFeedHeader::CopyFrom(const NyctFeedHeader& from) {
 
 bool NyctFeedHeader::IsInitialized() const {
   if ((_has_bits_[0] & 0x00000001) != 0x00000001) return false;
+  if (!::google::protobuf::internal::AllAreInitialized(this->trip_replacement_period())) return false;
   return true;
 }
 
@@ -890,11 +854,11 @@ void NyctFeedHeader::Swap(NyctFeedHeader* other) {
 }
 void NyctFeedHeader::InternalSwap(NyctFeedHeader* other) {
   using std::swap;
-  trip_replacement_period_.InternalSwap(&other->trip_replacement_period_);
-  nyct_subway_version_.Swap(&other->nyct_subway_version_);
+  CastToBase(&trip_replacement_period_)->InternalSwap(CastToBase(&other->trip_replacement_period_));
+  nyct_subway_version_.Swap(&other->nyct_subway_version_, &::google::protobuf::internal::GetEmptyStringAlreadyInited(),
+    GetArenaNoVirtual());
   swap(_has_bits_[0], other->_has_bits_[0]);
   _internal_metadata_.Swap(&other->_internal_metadata_);
-  swap(_cached_size_, other->_cached_size_);
 }
 
 ::google::protobuf::Metadata NyctFeedHeader::GetMetadata() const {
@@ -915,17 +879,15 @@ const int NyctTripDescriptor::kDirectionFieldNumber;
 
 NyctTripDescriptor::NyctTripDescriptor()
   : ::google::protobuf::Message(), _internal_metadata_(NULL) {
-  if (GOOGLE_PREDICT_TRUE(this != internal_default_instance())) {
-    ::protobuf_nyct_2dsubway_2eproto::InitDefaultsNyctTripDescriptor();
-  }
+  ::google::protobuf::internal::InitSCC(
+      &protobuf_nyct_2dsubway_2eproto::scc_info_NyctTripDescriptor.base);
   SharedCtor();
   // @@protoc_insertion_point(constructor:NyctTripDescriptor)
 }
 NyctTripDescriptor::NyctTripDescriptor(const NyctTripDescriptor& from)
   : ::google::protobuf::Message(),
       _internal_metadata_(NULL),
-      _has_bits_(from._has_bits_),
-      _cached_size_(0) {
+      _has_bits_(from._has_bits_) {
   _internal_metadata_.MergeFrom(from._internal_metadata_);
   train_id_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
   if (from.has_train_id()) {
@@ -938,7 +900,6 @@ NyctTripDescriptor::NyctTripDescriptor(const NyctTripDescriptor& from)
 }
 
 void NyctTripDescriptor::SharedCtor() {
-  _cached_size_ = 0;
   train_id_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
   is_assigned_ = false;
   direction_ = 1;
@@ -954,9 +915,7 @@ void NyctTripDescriptor::SharedDtor() {
 }
 
 void NyctTripDescriptor::SetCachedSize(int size) const {
-  GOOGLE_SAFE_CONCURRENT_WRITES_BEGIN();
-  _cached_size_ = size;
-  GOOGLE_SAFE_CONCURRENT_WRITES_END();
+  _cached_size_.Set(size);
 }
 const ::google::protobuf::Descriptor* NyctTripDescriptor::descriptor() {
   ::protobuf_nyct_2dsubway_2eproto::protobuf_AssignDescriptorsOnce();
@@ -964,17 +923,10 @@ const ::google::protobuf::Descriptor* NyctTripDescriptor::descriptor() {
 }
 
 const NyctTripDescriptor& NyctTripDescriptor::default_instance() {
-  ::protobuf_nyct_2dsubway_2eproto::InitDefaultsNyctTripDescriptor();
+  ::google::protobuf::internal::InitSCC(&protobuf_nyct_2dsubway_2eproto::scc_info_NyctTripDescriptor.base);
   return *internal_default_instance();
 }
 
-NyctTripDescriptor* NyctTripDescriptor::New(::google::protobuf::Arena* arena) const {
-  NyctTripDescriptor* n = new NyctTripDescriptor;
-  if (arena != NULL) {
-    arena->Own(n);
-  }
-  return n;
-}
 
 void NyctTripDescriptor::Clear() {
 // @@protoc_insertion_point(message_clear_start:NyctTripDescriptor)
@@ -984,8 +936,7 @@ void NyctTripDescriptor::Clear() {
 
   cached_has_bits = _has_bits_[0];
   if (cached_has_bits & 0x00000001u) {
-    GOOGLE_DCHECK(!train_id_.IsDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited()));
-    (*train_id_.UnsafeRawStringPointer())->clear();
+    train_id_.ClearNonDefaultToEmptyNoArena();
   }
   if (cached_has_bits & 6u) {
     is_assigned_ = false;
@@ -1001,7 +952,7 @@ bool NyctTripDescriptor::MergePartialFromCodedStream(
   ::google::protobuf::uint32 tag;
   // @@protoc_insertion_point(parse_start:NyctTripDescriptor)
   for (;;) {
-    ::std::pair< ::google::protobuf::uint32, bool> p = input->ReadTagWithCutoffNoLastTag(127u);
+    ::std::pair<::google::protobuf::uint32, bool> p = input->ReadTagWithCutoffNoLastTag(127u);
     tag = p.first;
     if (!p.second) goto handle_unusual;
     switch (::google::protobuf::internal::WireFormatLite::GetTagFieldNumber(tag)) {
@@ -1178,9 +1129,7 @@ size_t NyctTripDescriptor::ByteSizeLong() const {
 
   }
   int cached_size = ::google::protobuf::internal::ToCachedSize(total_size);
-  GOOGLE_SAFE_CONCURRENT_WRITES_BEGIN();
-  _cached_size_ = cached_size;
-  GOOGLE_SAFE_CONCURRENT_WRITES_END();
+  SetCachedSize(cached_size);
   return total_size;
 }
 
@@ -1246,12 +1195,12 @@ void NyctTripDescriptor::Swap(NyctTripDescriptor* other) {
 }
 void NyctTripDescriptor::InternalSwap(NyctTripDescriptor* other) {
   using std::swap;
-  train_id_.Swap(&other->train_id_);
+  train_id_.Swap(&other->train_id_, &::google::protobuf::internal::GetEmptyStringAlreadyInited(),
+    GetArenaNoVirtual());
   swap(is_assigned_, other->is_assigned_);
   swap(direction_, other->direction_);
   swap(_has_bits_[0], other->_has_bits_[0]);
   _internal_metadata_.Swap(&other->_internal_metadata_);
-  swap(_cached_size_, other->_cached_size_);
 }
 
 ::google::protobuf::Metadata NyctTripDescriptor::GetMetadata() const {
@@ -1271,17 +1220,15 @@ const int NyctStopTimeUpdate::kActualTrackFieldNumber;
 
 NyctStopTimeUpdate::NyctStopTimeUpdate()
   : ::google::protobuf::Message(), _internal_metadata_(NULL) {
-  if (GOOGLE_PREDICT_TRUE(this != internal_default_instance())) {
-    ::protobuf_nyct_2dsubway_2eproto::InitDefaultsNyctStopTimeUpdate();
-  }
+  ::google::protobuf::internal::InitSCC(
+      &protobuf_nyct_2dsubway_2eproto::scc_info_NyctStopTimeUpdate.base);
   SharedCtor();
   // @@protoc_insertion_point(constructor:NyctStopTimeUpdate)
 }
 NyctStopTimeUpdate::NyctStopTimeUpdate(const NyctStopTimeUpdate& from)
   : ::google::protobuf::Message(),
       _internal_metadata_(NULL),
-      _has_bits_(from._has_bits_),
-      _cached_size_(0) {
+      _has_bits_(from._has_bits_) {
   _internal_metadata_.MergeFrom(from._internal_metadata_);
   scheduled_track_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
   if (from.has_scheduled_track()) {
@@ -1295,7 +1242,6 @@ NyctStopTimeUpdate::NyctStopTimeUpdate(const NyctStopTimeUpdate& from)
 }
 
 void NyctStopTimeUpdate::SharedCtor() {
-  _cached_size_ = 0;
   scheduled_track_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
   actual_track_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
@@ -1311,9 +1257,7 @@ void NyctStopTimeUpdate::SharedDtor() {
 }
 
 void NyctStopTimeUpdate::SetCachedSize(int size) const {
-  GOOGLE_SAFE_CONCURRENT_WRITES_BEGIN();
-  _cached_size_ = size;
-  GOOGLE_SAFE_CONCURRENT_WRITES_END();
+  _cached_size_.Set(size);
 }
 const ::google::protobuf::Descriptor* NyctStopTimeUpdate::descriptor() {
   ::protobuf_nyct_2dsubway_2eproto::protobuf_AssignDescriptorsOnce();
@@ -1321,17 +1265,10 @@ const ::google::protobuf::Descriptor* NyctStopTimeUpdate::descriptor() {
 }
 
 const NyctStopTimeUpdate& NyctStopTimeUpdate::default_instance() {
-  ::protobuf_nyct_2dsubway_2eproto::InitDefaultsNyctStopTimeUpdate();
+  ::google::protobuf::internal::InitSCC(&protobuf_nyct_2dsubway_2eproto::scc_info_NyctStopTimeUpdate.base);
   return *internal_default_instance();
 }
 
-NyctStopTimeUpdate* NyctStopTimeUpdate::New(::google::protobuf::Arena* arena) const {
-  NyctStopTimeUpdate* n = new NyctStopTimeUpdate;
-  if (arena != NULL) {
-    arena->Own(n);
-  }
-  return n;
-}
 
 void NyctStopTimeUpdate::Clear() {
 // @@protoc_insertion_point(message_clear_start:NyctStopTimeUpdate)
@@ -1342,12 +1279,10 @@ void NyctStopTimeUpdate::Clear() {
   cached_has_bits = _has_bits_[0];
   if (cached_has_bits & 3u) {
     if (cached_has_bits & 0x00000001u) {
-      GOOGLE_DCHECK(!scheduled_track_.IsDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited()));
-      (*scheduled_track_.UnsafeRawStringPointer())->clear();
+      scheduled_track_.ClearNonDefaultToEmptyNoArena();
     }
     if (cached_has_bits & 0x00000002u) {
-      GOOGLE_DCHECK(!actual_track_.IsDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited()));
-      (*actual_track_.UnsafeRawStringPointer())->clear();
+      actual_track_.ClearNonDefaultToEmptyNoArena();
     }
   }
   _has_bits_.Clear();
@@ -1360,7 +1295,7 @@ bool NyctStopTimeUpdate::MergePartialFromCodedStream(
   ::google::protobuf::uint32 tag;
   // @@protoc_insertion_point(parse_start:NyctStopTimeUpdate)
   for (;;) {
-    ::std::pair< ::google::protobuf::uint32, bool> p = input->ReadTagWithCutoffNoLastTag(127u);
+    ::std::pair<::google::protobuf::uint32, bool> p = input->ReadTagWithCutoffNoLastTag(127u);
     tag = p.first;
     if (!p.second) goto handle_unusual;
     switch (::google::protobuf::internal::WireFormatLite::GetTagFieldNumber(tag)) {
@@ -1514,9 +1449,7 @@ size_t NyctStopTimeUpdate::ByteSizeLong() const {
 
   }
   int cached_size = ::google::protobuf::internal::ToCachedSize(total_size);
-  GOOGLE_SAFE_CONCURRENT_WRITES_BEGIN();
-  _cached_size_ = cached_size;
-  GOOGLE_SAFE_CONCURRENT_WRITES_END();
+  SetCachedSize(cached_size);
   return total_size;
 }
 
@@ -1579,11 +1512,12 @@ void NyctStopTimeUpdate::Swap(NyctStopTimeUpdate* other) {
 }
 void NyctStopTimeUpdate::InternalSwap(NyctStopTimeUpdate* other) {
   using std::swap;
-  scheduled_track_.Swap(&other->scheduled_track_);
-  actual_track_.Swap(&other->actual_track_);
+  scheduled_track_.Swap(&other->scheduled_track_, &::google::protobuf::internal::GetEmptyStringAlreadyInited(),
+    GetArenaNoVirtual());
+  actual_track_.Swap(&other->actual_track_, &::google::protobuf::internal::GetEmptyStringAlreadyInited(),
+    GetArenaNoVirtual());
   swap(_has_bits_[0], other->_has_bits_[0]);
   _internal_metadata_.Swap(&other->_internal_metadata_);
-  swap(_cached_size_, other->_cached_size_);
 }
 
 ::google::protobuf::Metadata NyctStopTimeUpdate::GetMetadata() const {
@@ -1602,5 +1536,21 @@ void NyctStopTimeUpdate::InternalSwap(NyctStopTimeUpdate* other) {
   nyct_stop_time_update(kNyctStopTimeUpdateFieldNumber, *::NyctStopTimeUpdate::internal_default_instance());
 
 // @@protoc_insertion_point(namespace_scope)
+namespace google {
+namespace protobuf {
+template<> GOOGLE_PROTOBUF_ATTRIBUTE_NOINLINE ::TripReplacementPeriod* Arena::CreateMaybeMessage< ::TripReplacementPeriod >(Arena* arena) {
+  return Arena::CreateInternal< ::TripReplacementPeriod >(arena);
+}
+template<> GOOGLE_PROTOBUF_ATTRIBUTE_NOINLINE ::NyctFeedHeader* Arena::CreateMaybeMessage< ::NyctFeedHeader >(Arena* arena) {
+  return Arena::CreateInternal< ::NyctFeedHeader >(arena);
+}
+template<> GOOGLE_PROTOBUF_ATTRIBUTE_NOINLINE ::NyctTripDescriptor* Arena::CreateMaybeMessage< ::NyctTripDescriptor >(Arena* arena) {
+  return Arena::CreateInternal< ::NyctTripDescriptor >(arena);
+}
+template<> GOOGLE_PROTOBUF_ATTRIBUTE_NOINLINE ::NyctStopTimeUpdate* Arena::CreateMaybeMessage< ::NyctStopTimeUpdate >(Arena* arena) {
+  return Arena::CreateInternal< ::NyctStopTimeUpdate >(arena);
+}
+}  // namespace protobuf
+}  // namespace google
 
 // @@protoc_insertion_point(global_scope)
