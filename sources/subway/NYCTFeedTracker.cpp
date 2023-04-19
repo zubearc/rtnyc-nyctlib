@@ -57,7 +57,10 @@ namespace nyctlib {
 			}
 		}
 
+#ifdef SESS
 		SessInterface::commit(nyct_trip_id, last_update_time, 0, m);
+#endif
+
 #endif
 	}
 

@@ -1,7 +1,6 @@
 #include <iostream>
 #include <ctime>
 #include <cassert>
-#include <uWS/uWS.h>
 
 #include "interfaces/WSInterface.h"
 #include "Globals.h"
@@ -39,8 +38,8 @@ namespace nyctlib {
 		object["t"] = (int)message_type;
 	}
 
-	void WSInterface::processTextMessage(Client client, char *message, size_t length) {
-		uWS::WebSocket<uWS::SERVER> *ws = GETSERVER(client);
+	void WSInterface::processTextMessage(USERSOCKET *ws, char *message, size_t length) {
+		auto userData = ws->getUserData();
 		std::string msg(message, length);
 		std::cout << "WSI: <- '" << msg << "'" << std::endl;
 
@@ -105,18 +104,18 @@ namespace nyctlib {
 			auto requested_format = _requested_format.int_value();
 
 			if (requested_format == 1) { // JSON
-				this->client_map[client].requested_format = FormatJson;
+				userData->requested_format = FormatJson;
 				// No need to increment has_json_clients as this is already the default
 			} else if (requested_format == 2) { // Binary Flatbuffers
-				if (this->client_map[client].requested_format != FormatFlatbuffer) {
+				if (userData->requested_format != FormatFlatbuffer) {
 					// User wants to switch from JSON to binary
-					this->client_map[client].requested_format = FormatFlatbuffer;
+					userData->requested_format = FormatFlatbuffer;
 					this->has_json_clients--;
 					this->has_flat_clients++;
 				}
 			}
 
-			this->respondStatus(client, "OK", MessageType::Response);
+			this->respondStatus(ws, "OK", MessageType::Response);
 		} else if (message_type == 334) {
 			/*std::thread([this]() {
 				Sleep(1000);
@@ -129,16 +128,14 @@ namespace nyctlib {
 			auto requested_format = _requested_format.int_value();
 
 			if (requested_format == 2) { // Aggregator
-				this->client_map[client].client_type = Aggregator;
+				userData->client_type = Aggregator;
 			}
 
-			this->respondStatus(client, "OK", MessageType::Response);
+			this->respondStatus(ws, "OK", MessageType::Response);
 		}
 	}
 
-	void WSInterface::processBinaryMessage(Client client, char *message, size_t length) {
-		uWS::WebSocket<uWS::SERVER> *ws = GETSERVER(client);
-
+	void WSInterface::processBinaryMessage(USERSOCKET *ws, char *message, size_t length) {
 		if (length < 8) {
 			LOG_DEBUG("WSI: INVALID Binary input message from '%s'\n", ws->getAddress().address);
 		}
@@ -161,59 +158,62 @@ namespace nyctlib {
 	}
 
 	void WSInterface::start(std::string bind_host, short bind_port) {
-		auto listener = new uWS::Hub();
-		this->server = listener;
-
-		listener->onMessage([&](uWS::WebSocket<uWS::SERVER> *ws, char *message, size_t length, uWS::OpCode opCode) {
-			
-			if (opCode == uWS::OpCode::TEXT) {
-				processTextMessage(ws, message, length);
-			} else if (opCode == uWS::OpCode::BINARY) {
-				processBinaryMessage(ws, message, length);
-			} else {
-				LOG_DEBUG("WSI: Got unknown opCode, cannot accept message: %d\n", opCode);
-			}
-			
-		});
-
-		listener->onError([](int port) {
-			std::cout << "Could not bind to port " << port << "!" << std::endl;
-			exit(-1);
-		});
-		//listener->terminate();
-		
-		listener->onConnection([&](uWS::WebSocket<uWS::SERVER> *ws, uWS::HttpRequest req) {
-			
-			printf("WSI: New connection from address '%s:%d'\n", ws->getAddress().address, ws->getAddress().port);
-			
-			// Let the code below remain as a visible reminisance of how much C++ is a PITA
-			//ws->terminate();
-			//((uWS::Group<uWS::SERVER>*)((uWS::Hub*)listener))->terminate();
-			//printf("listener=%d, server=%d\n", listener, server);
-			//((uWS::Group<uWS::SERVER>*)(uWS::Hub*)server)->terminate();
-			//this->terminate();
-			
-			this->has_json_clients++;
-			this->client_map[ws] = ClientDetails{ time(NULL), FormatJson };
-		});
-
-		listener->onDisconnection([&](uWS::WebSocket<uWS::SERVER> *ws, int code, char *msg, size_t len) {
-			printf("WSI: Client '%s:%d' disconnected, code %d %s\n",
-				ws->getAddress().address, ws->getAddress().port, code, std::string(msg, len).c_str());
-			auto client = this->client_map[ws];
-			if (client.requested_format == FormatJson)
-				this->has_json_clients--;
-			if (client.requested_format == FormatFlatbuffer)
-				this->has_flat_clients--;
-			this->client_map.erase(ws);
-		});
-
-
-		if (listener->listen("0.0.0.0", bind_port)) {
-			printf("WSI: Now listening on '%s:%d'\n", bind_host.c_str(), bind_port);
-			listener->run();
-		}
-
+		auto app = uWS::App().ws<PerSocketData>("/*", {
+					/* Settings */
+					.compression = uWS::SHARED_COMPRESSOR,
+					.maxPayloadLength = 16 * 1024,
+					.idleTimeout = 10,
+					.maxBackpressure = 1 * 1024 * 1024,
+					/* Handlers */
+					.upgrade = nullptr,
+					.open = [](auto *ws) {
+							/* Open event here, you may access ws->getUserData() which points to a PerSocketData struct */
+						auto address = ws->getRemoteAddressAsText();
+						auto userData = ws->getUserData();
+						printf("WSI: New connection from address '%s'\n", address.c_str());
+						this->has_json_clients++;
+						userData->connection_time = time(NULL);
+						userData->requested_format = FormatJson;
+						userData->client_type = Consumer;
+						this->client_map[ws] = true;
+					},
+					.message = [&](auto *ws, std::string_view message, uWS::OpCode opCode) {
+						ws->send(message, opCode, true);
+						if (opCode == uWS::OpCode::TEXT) {
+							processTextMessage(ws, message, length);
+						} else if (opCode == uWS::OpCode::BINARY) {
+							processBinaryMessage(ws, message, length);
+						} else {
+							LOG_DEBUG("WSI: Got unknown opCode, cannot accept message: %d\n", opCode);
+						}
+					},
+					.drain = [](auto */*ws*/) {
+							/* Check ws->getBufferedAmount() here */
+					},
+					.ping = [](auto */*ws*/) {
+							/* Not implemented yet */
+					},
+					.pong = [](auto */*ws*/) {
+							/* Not implemented yet */
+					},
+					.close = [&](auto *ws, int code, std::string_view message) {
+							/* You may access ws->getUserData() here */
+						// Get the users' address
+						auto userData = ws->getUserData();
+						auto a = ws->getRemoteAddress();
+						if (userData->requested_format == FormatJson)
+							this->has_json_clients--;
+						if (userData->requested_format == FormatFlatbuffer)
+							this->has_flat_clients--;
+					}
+			}).listen(bind_port, [&](auto *listen_socket) {
+					if (listen_socket) {
+							std::cout << "WSI: Listening on port " << bind_port << std::endl;
+					} else {
+							std::cout << "WSI: Failed to listen on port " << bind_port << std::endl;
+							exit(1);
+					}
+			}).run();
 		printf("WSI: Ended.\n");
 	}
 
@@ -264,24 +264,19 @@ namespace nyctlib {
 
 		Json j(json);
 		std::string message = j.dump();
-		auto prepared = uWS::WebSocket<uWS::SERVER>::prepareMessage((char*)message.c_str(), message.length(), uWS::TEXT, false);
-
-		LOG_DEBUG("WSI: Broadcasting to JSON %d clients\n", client_map.size());
-		for (auto user : client_map) {
-			if (user.second.requested_format != FormatJson)
+		LOG_DEBUG("WSI: Broadcasting %d bytes to JSON %d clients\n", message.length(), client_list.size());
+		for (auto ws : client_list) {
+			auto userData = ws->getUserData();
+			if (userData->requested_format != FormatJson)
 				continue;
 
-			auto ws = (uWS::WebSocket<uWS::SERVER>*)user.first;
-			LOG_DEBUG("WSI: Broadcasting to FD%d (shuttingdown=%d, remBytes=%d)\n", 
-				ws->getFd(), ws->isShuttingDown(), ws->remainingBytes);
+			LOG_DEBUG("WSI: Broadcasting to client at '%s'\n", ws->getRemoteAddressAsText());
 #ifdef _WIN32
 			// Fixes bug with sending multiple messages one after the other
 			// That would result in program faults
 			Sleep(180);
 #endif
-			if (!ws->isClosed()) {
-				ws->sendPrepared(prepared);
-			}	
+			ws->send(message);
 		}
 	}
 
@@ -296,18 +291,18 @@ namespace nyctlib {
 		memcpy(ws_message + 12, message, message_len);
 		memset(ws_message + message_len + 12, 0, 4); // zero term
 
-		auto prepared = uWS::WebSocket<uWS::SERVER>::prepareMessage(ws_message, message_len + 10, uWS::BINARY, false);
-		for (auto client : client_map) {
-			if (client.second.requested_format != FormatFlatbuffer)
+		auto str = std::string(ws_message, message_len + 10);
+
+		for (auto client : this->client_list) {
+			auto clientData = client->getUserData();
+			if (clientData->requested_format != FormatFlatbuffer)
 				continue;
-			if (reason == AggregatorFeed && client.second.client_type != Aggregator)
+			if (reason == AggregatorFeed && clientData->client_type != Aggregator)
 				continue;
-			auto ws = GETSERVER(client.first);
-			ws->sendPrepared(prepared);
+			client->send(str);
 		}
 
 		//testReadMessage(ws_message, message_len + 10);
-
 		delete[] ws_message;
 	}
 
@@ -361,7 +356,7 @@ namespace nyctlib {
 		delete[] ws_message;
 	}
 
-	void WSInterface::respondError(Client client, std::string error_message) {
+	void WSInterface::respondError(USERSOCKET * client, std::string error_message) {
 		Json::object json;
 		createJsonResponseHead(json, MessageType::Error);
 		json["message"] = error_message;
@@ -371,7 +366,7 @@ namespace nyctlib {
 		return;
 	}
 
-	void WSInterface::respondStatus(Client client, std::string message, MessageType message_type) {
+	void WSInterface::respondStatus(USERSOCKET *client, std::string message, MessageType message_type) {
 		Json::object json;
 		createJsonResponseHead(json, message_type);
 		json["message"] = message;

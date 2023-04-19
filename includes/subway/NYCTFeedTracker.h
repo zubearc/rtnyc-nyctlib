@@ -8,7 +8,9 @@
 #include "subway/SubwayTrackedTrip.h"
 #ifndef NO_INTERFACES
 #include "events/EventHolder.h"
-#include "interfaces/SessInterface.h"
+	#ifdef SESS
+	#include "interfaces/SessInterface.h"
+	#endif
 #endif
 #include "events/SubwayTripEvent.h"
 

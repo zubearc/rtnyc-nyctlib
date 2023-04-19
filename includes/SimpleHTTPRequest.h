@@ -27,7 +27,7 @@ public:
 		curl = curl_easy_init();
 	}
 
-	bool get_save(const char *url, const char *filename) {
+	bool get_save(const char *url, const char *filename, std::string apiKey = "") {
 		FILE *file = fopen(filename, "wb");
 		if (file == NULL) {
 			printf("Failed to open file %s!\n", filename);
@@ -38,6 +38,13 @@ public:
 		curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
 		curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, curl_write_data_file);
 		curl_easy_setopt(curl, CURLOPT_WRITEDATA, file);
+		// set x-api-key header
+		if (apiKey != "") {
+			struct curl_slist *headers = NULL;
+			auto header = std::string("x-api-key: ") + apiKey;
+			headers = curl_slist_append(headers, header.c_str());
+			curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
+		}
 		/* Perform the request, res will get the return code */
 		CURLcode res = curl_easy_perform(curl);
 		fclose(file);

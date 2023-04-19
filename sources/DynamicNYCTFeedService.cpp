@@ -18,7 +18,7 @@ namespace nyctlib {
 
 		try {
 			SimpleHTTPRequest requester;
-			bool ret = requester.get_save(feed_endpoint.c_str(), file_path.c_str());
+			bool ret = requester.get_save(this->feed_endpoint.c_str(), file_path.c_str(), this->api_key.c_str());
 			if (!ret)
 				throw std::exception(); // yes i am an idiot for doing this
 		} catch (std::exception &ex) {

@@ -19,7 +19,7 @@ set(NYCTLIB_SOURCES
 	sources/busses/NYCBusTracker.cpp
 )
 
-set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD 20)
 message("Using CMAKE C++ standard ${CMAKE_CXX_STANDARD}")
 
 if (UNIX)
@@ -37,6 +37,7 @@ else()
 	find_package(ZLIB REQUIRED)
 	find_package(OpenSSL REQUIRED)
 	find_package(Flatbuffers REQUIRED)
+	find_path(UWEBSOCKETS_INCLUDE_DIRS "uwebsockets/App.h")
 
 	message("CURL install dir is ${CURL_INCLUDE_DIR}")
 
@@ -61,7 +62,6 @@ else()
 	include_directories(${CURL_INCLUDE_DIRS})
 	if (NOT NO_INTERFACE_BUILD)
 		find_library(uv REQUIRED)
-		find_library(uwebsockets REQUIRED)
 
 		# monolithic dependencies to get basic websockets ...
 		target_link_libraries(NYCTLib PRIVATE ZLIB::ZLIB)
@@ -72,17 +72,23 @@ else()
 
 		message("ZLIB install lib dir is ${ZLIB_LIBRARIES}")
 		message("OPENSSL intall lib dir is ${OPENSSL_LIBRARIES}")
+		message("uv install lib dir is ${uv_LIBRARIES}")
+		message("uwebsockets install lib dir is ${uwebsockets_LIBRARIES}")
 	else()
 		add_definitions("-DNO_INTERFACES")
 	endif()
 endif()
 # TODO: Add tests and install targets if needed.
 
-find_package(protobuf CONFIG REQUIRED)
+find_package(Protobuf REQUIRED)
 target_link_libraries(NYCTLib PRIVATE protobuf::libprotobuf)
 include_directories(${protobuf_INCLUDE_DIR})
-include_directories(${uwebsockets_INCLUDE_DIR})
+include_directories(${UWEBSOCKETS_INCLUDE_DIRS})
 include_directories(${flatbuffers_INCLUDE_DIR})
+
+message("Protobuf include dir is ${protobuf_INCLUDE_DIR}")
+message("uwebsockets include dir is ${UWEBSOCKETS_INCLUDE_DIRS}")
+message("flatbuffers include dir is ${flatbuffers_INCLUDE_DIR}")
 
 # below is debug code to print all CMake variables
 #get_cmake_property(_variableNames VARIABLES)

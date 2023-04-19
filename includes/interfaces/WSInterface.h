@@ -5,6 +5,9 @@
 #include <functional>
 #include "LibInterface.h"
 #include "json11.hpp"
+#include <uwebsockets/App.h>
+
+#define USERSOCKET uWS::WebSocket<false, false, PerSocketData>
 
 namespace nyctlib {
 
@@ -23,6 +26,13 @@ namespace nyctlib {
 		enum ClientType {
 			Consumer,
 			Aggregator
+		};
+
+		struct PerSocketData {
+			/* Fill with user data */
+			long long connection_time;
+			RequestedFeedFormat requested_format;
+			ClientType client_type = Consumer;
 		};
 
 		struct ClientDetails {
@@ -74,7 +84,8 @@ namespace nyctlib {
 		std::string createFlatRequestMessage();
 		void createJsonResponseHead(json11::Json::object &object, MessageType message_type = MessageType::Response);
 
-		std::map<Client, ClientDetails> client_map;
+		std::map<USERSOCKET, bool> client_map;
+		std::vector<USERSOCKET> client_list;
 
 		std::function<void(Client, json11::Json&)> jrecieve_handler = nullptr;
 
@@ -85,8 +96,8 @@ namespace nyctlib {
 			std::function<void(Client, std::string command, std::string arguments)>> command_handler;
 
 		// INTERNAL MESSAGE PROCESSORS
-		void processTextMessage(Client ws, char *message, size_t length);
-		void processBinaryMessage(Client client, char *message, size_t length);
+		void processTextMessage(USERSOCKET *ws, char *message, size_t length);
+		void processBinaryMessage(USERSOCKET *ws, char *message, size_t length);
 	public:
 		void start(std::string bind_host = "0.0.0.0", short bind_port = 7204);
 		void stop(int code, std::string message);
@@ -125,12 +136,12 @@ namespace nyctlib {
 		struct BinaryMessageWrapper { int message_type; unsigned char *message; int message_len; };
 		void broadcastBinaryPreferredBatch(MessageType reason, std::vector<BinaryMessageWrapper> messages);
 
-		void respondError(Client client, std::string error_message);
+		void respondError(USERSOCKET * client, std::string error_message);
 
-		void respondStatus(Client client, std::string status_message, MessageType message_type = MessageType::Status);
+		void respondStatus(USERSOCKET * client, std::string status_message, MessageType message_type = MessageType::Status);
 
 		~WSInterface() {
-			delete server;
+
 		}
 	};
 }

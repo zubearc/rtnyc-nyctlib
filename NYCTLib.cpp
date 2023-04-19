@@ -203,8 +203,12 @@ int main(int argc, char *argv[]) {
 		}
 
 		if (subwayFeedParam.length()) {
+			// https://api-endpoint.mta.info/Dataservice/mtagtfsfeeds/nyct%2Fgtfs-ace
+			// New API endpoint
 			INYCTFeedServicePtr feedService = std::make_unique<DynamicNYCTFeedService>(
-				("http://datamine.mta.info/mta_esi.php?key=" + apikey_str + "&feed_id=" + subwayFeedParam));
+				"https://api-endpoint.mta.info/Dataservice/mtagtfsfeeds/" + subwayFeedParam + "?key=" + apikey_str);
+			// INYCTFeedServicePtr feedService = std::make_unique<DynamicNYCTFeedService>(
+			// 	("http://datamine.mta.info/mta_esi.php?key=" + apikey_str + "&feed_id=" + subwayFeedParam));
 
 			auto event_holder = std::make_shared<BlockingEventHolder<SubwayTripEvent>>();
 			NYCTFeedTracker nyctFeedTracker(feedService, event_holder);

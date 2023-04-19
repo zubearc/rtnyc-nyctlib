@@ -1,3 +1,4 @@
+#ifdef SESS
 #include "interfaces/SessInterface.h"
 
 #include "sess_generated.h"
@@ -85,3 +86,4 @@ namespace nyctlib {
 	{
 	}
 }
+#endif
